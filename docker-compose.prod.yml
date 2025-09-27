@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  wolfx-ai-connect:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: wolfx-ai-connect-prod
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - VITE_SUPABASE_URL=https://supabase.wolfx.com.br
+      - VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.Mr2Z9_cUmM-LjhY5SvArT_78TPPiUh_hGITfq94KGbs
+    volumes:
+      - nginx_cache:/var/cache/nginx
+    networks:
+      - wolfx-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wolfx.rule=Host(`wolfx.com.br`)"
+      - "traefik.http.routers.wolfx.entrypoints=websecure"
+      - "traefik.http.routers.wolfx.tls.certresolver=letsencrypt"
+      - "traefik.http.services.wolfx.loadbalancer.server.port=80"
+      - "traefik.docker.network=wolfx-network"
+      - "traefik.http.middlewares.wolfx-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.middlewares.wolfx-headers.headers.customrequestheaders.X-Forwarded-For="
+      - "traefik.http.middlewares.wolfx-headers.headers.customrequestheaders.X-Real-IP="
+      - "traefik.http.routers.wolfx.middlewares=wolfx-headers"
+
+  # Traefik como proxy reverso
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@wolfx.com.br"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+    networks:
+      - wolfx-network
+
+volumes:
+  nginx_cache:
+  traefik_letsencrypt:
+
+networks:
+  wolfx-network:
+    external: true

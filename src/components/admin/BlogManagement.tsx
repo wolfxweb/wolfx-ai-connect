@@ -1,56 +1,99 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase, BlogPost, Category } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Edit, Trash2, Plus, Eye, Loader2, Calendar, User } from 'lucide-react'
+import { Edit, Trash2, Plus, Eye, Loader2, Calendar, User, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function BlogManagement() {
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingPost, setEditingPost] = useState<BlogPost | null>(null)
-  const [formData, setFormData] = useState({
-    title: '',
-    slug: '',
-    content: '',
-    excerpt: '',
-    featured_image: '',
-    status: 'draft' as 'draft' | 'published' | 'archived',
-    category_id: '',
-    tags: ''
-  })
-  const [submitting, setSubmitting] = useState(false)
+  const navigate = useNavigate()
   const { user } = useAuth()
+  
+  // Estados para filtros e paginação
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPosts, setTotalPosts] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
+  
+  const postsPerPage = 10
 
   useEffect(() => {
     fetchPosts()
     fetchCategories()
-  }, [])
+  }, [currentPage, searchTerm, statusFilter, categoryFilter])
 
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true)
+      
+      // Construir query com filtros
+      let query = supabase
         .from('blog_posts')
-        .select(`
-          *,
-          categories (name),
-          profiles (name)
-        `)
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
 
-      if (error) throw error
-      setPosts(data || [])
+      // Aplicar filtros
+      if (searchTerm) {
+        query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,excerpt.ilike.%${searchTerm}%`)
+      }
+      
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter)
+      }
+      
+      if (categoryFilter !== 'all') {
+        query = query.eq('category_id', categoryFilter)
+      }
+
+      // Aplicar paginação
+      const from = (currentPage - 1) * postsPerPage
+      const to = from + postsPerPage - 1
+      query = query.range(from, to)
+
+      const { data: postsData, error: postsError, count } = await query
+
+      if (postsError) throw postsError
+
+      // Buscar categorias separadamente
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('id, name')
+
+      if (categoriesError) {
+        console.warn('Erro ao buscar categorias:', categoriesError)
+      }
+
+      // Buscar profiles separadamente
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+
+      if (profilesError) {
+        console.warn('Erro ao buscar profiles:', profilesError)
+      }
+
+      // Combinar dados manualmente
+      const postsWithRelations = postsData?.map(post => ({
+        ...post,
+        categories: categoriesData?.find(cat => cat.id === post.category_id) || null,
+        profiles: profilesData?.find(prof => prof.id === post.author_id) || null
+      })) || []
+
+      setPosts(postsWithRelations)
+      setTotalPosts(count || 0)
+      setTotalPages(Math.ceil((count || 0) / postsPerPage))
     } catch (error) {
       console.error('Error fetching posts:', error)
       toast.error('Erro ao carregar posts')
@@ -63,7 +106,7 @@ export default function BlogManagement() {
     try {
       const { data, error } = await supabase
         .from('categories')
-        .select('*')
+        .select('id, name')
         .order('name')
 
       if (error) throw error
@@ -73,106 +116,23 @@ export default function BlogManagement() {
     }
   }
 
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim()
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSubmitting(true)
-
-    try {
-      const slug = generateSlug(formData.title)
-      const tagsArray = formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
-      
-      if (editingPost) {
-        // Atualizar post existente
-        const { error } = await supabase
-          .from('blog_posts')
-          .update({
-            title: formData.title,
-            slug,
-            content: formData.content,
-            excerpt: formData.excerpt,
-            featured_image: formData.featured_image,
-            status: formData.status,
-            category_id: formData.category_id,
-            tags: tagsArray,
-            updated_at: new Date().toISOString(),
-            ...(formData.status === 'published' && !editingPost.published_at && {
-              published_at: new Date().toISOString()
-            })
-          })
-          .eq('id', editingPost.id)
-
-        if (error) throw error
-        toast.success('Post atualizado com sucesso!')
-      } else {
-        // Criar novo post
-        const { error } = await supabase
-          .from('blog_posts')
-          .insert([
-            {
-              title: formData.title,
-              slug,
-              content: formData.content,
-              excerpt: formData.excerpt,
-              featured_image: formData.featured_image,
-              status: formData.status,
-              category_id: formData.category_id,
-              author_id: user?.id,
-              tags: tagsArray,
-              ...(formData.status === 'published' && {
-                published_at: new Date().toISOString()
-              })
-            }
-          ])
-
-        if (error) throw error
-        toast.success('Post criado com sucesso!')
-      }
-
-      setIsDialogOpen(false)
-      setEditingPost(null)
-      setFormData({
-        title: '',
-        slug: '',
-        content: '',
-        excerpt: '',
-        featured_image: '',
-        status: 'draft',
-        category_id: '',
-        tags: ''
-      })
-      fetchPosts()
-    } catch (error: any) {
-      console.error('Error saving post:', error)
-      toast.error(error.message || 'Erro ao salvar post')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
   const handleEdit = (post: BlogPost) => {
-    setEditingPost(post)
-    setFormData({
-      title: post.title,
-      slug: post.slug,
-      content: post.content,
-      excerpt: post.excerpt || '',
-      featured_image: post.featured_image || '',
-      status: post.status,
-      category_id: post.category_id,
-      tags: post.tags?.join(', ') || ''
-    })
-    setIsDialogOpen(true)
+    navigate(`/admin/posts/${post.id}/edit`)
+  }
+
+  const handleNewPost = () => {
+    navigate('/admin/posts/new')
+  }
+
+  const clearFilters = () => {
+    setSearchTerm('')
+    setStatusFilter('all')
+    setCategoryFilter('all')
+    setCurrentPage(1)
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
   }
 
   const handleDelete = async (postId: string) => {
@@ -193,31 +153,18 @@ export default function BlogManagement() {
     }
   }
 
-  const handleOpenDialog = () => {
-    setEditingPost(null)
-    setFormData({
-      title: '',
-      slug: '',
-      content: '',
-      excerpt: '',
-      featured_image: '',
-      status: 'draft',
-      category_id: '',
-      tags: ''
-    })
-    setIsDialogOpen(true)
-  }
-
   const getStatusBadge = (status: string) => {
     const variants = {
       draft: 'secondary',
       published: 'default',
+      scheduled: 'outline',
       archived: 'destructive'
     } as const
 
     const labels = {
       draft: 'Rascunho',
       published: 'Publicado',
+      scheduled: 'Agendado',
       archived: 'Arquivado'
     }
 
@@ -238,161 +185,89 @@ export default function BlogManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Filtros */}
       <Card>
         <CardHeader>
-          <CardTitle>Posts do Blog</CardTitle>
-          <CardDescription>
-            Gerencie os posts do seu blog
-          </CardDescription>
+          <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center space-x-2">
+              <Filter className="h-5 w-5" />
+              <span>Filtros e Busca</span>
+            </CardTitle>
+            <Button onClick={handleNewPost}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Post
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between items-center mb-4">
-            <p className="text-sm text-muted-foreground">
-              Total: {posts.length} posts
-            </p>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={handleOpenDialog}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Post
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingPost ? 'Editar Post' : 'Novo Post'}
-                  </DialogTitle>
-                  <DialogDescription>
-                    {editingPost 
-                      ? 'Atualize as informações do post'
-                      : 'Crie um novo post para seu blog'
-                    }
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Título do Post</Label>
-                      <Input
-                        id="title"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        placeholder="Digite o título do post"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="slug">Slug (URL)</Label>
-                      <Input
-                        id="slug"
-                        value={generateSlug(formData.title)}
-                        readOnly
-                        className="bg-gray-50"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Categoria</Label>
-                      <Select 
-                        value={formData.category_id} 
-                        onValueChange={(value) => setFormData({ ...formData, category_id: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="status">Status</Label>
-                      <Select 
-                        value={formData.status} 
-                        onValueChange={(value: 'draft' | 'published' | 'archived') => setFormData({ ...formData, status: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="draft">Rascunho</SelectItem>
-                          <SelectItem value="published">Publicado</SelectItem>
-                          <SelectItem value="archived">Arquivado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="excerpt">Resumo</Label>
-                    <Textarea
-                      id="excerpt"
-                      value={formData.excerpt}
-                      onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                      placeholder="Breve resumo do post..."
-                      rows={2}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="featured_image">URL da Imagem Destaque</Label>
-                    <Input
-                      id="featured_image"
-                      value={formData.featured_image}
-                      onChange={(e) => setFormData({ ...formData, featured_image: e.target.value })}
-                      placeholder="https://exemplo.com/imagem.jpg"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="tags">Tags (separadas por vírgula)</Label>
-                    <Input
-                      id="tags"
-                      value={formData.tags}
-                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                      placeholder="tecnologia, react, javascript"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="content">Conteúdo</Label>
-                    <Textarea
-                      id="content"
-                      value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      placeholder="Digite o conteúdo do post..."
-                      rows={10}
-                      required
-                    />
-                  </div>
-                  
-                  <DialogFooter>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setIsDialogOpen(false)}
-                      disabled={submitting}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={submitting}>
-                      {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      {editingPost ? 'Atualizar' : 'Criar'}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Buscar</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por título, conteúdo..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="draft">Rascunho</SelectItem>
+                  <SelectItem value="published">Publicado</SelectItem>
+                  <SelectItem value="scheduled">Agendado</SelectItem>
+                  <SelectItem value="archived">Arquivado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Categoria</label>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as categorias" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">&nbsp;</label>
+              <Button variant="outline" onClick={clearFilters} className="w-full">
+                Limpar Filtros
+              </Button>
+            </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Lista de Posts */}
+      <Card>
+        <CardHeader>
+          <div>
+            <CardTitle>Posts do Blog</CardTitle>
+            <CardDescription>
+              {totalPosts > 0 ? `${totalPosts} posts encontrados` : 'Nenhum post encontrado'}
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
 
           {posts.length === 0 ? (
             <Alert>
@@ -468,10 +343,68 @@ export default function BlogManagement() {
                 ))}
               </TableBody>
             </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
+              )}
+              
+              {/* Paginação */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6">
+                  <div className="text-sm text-muted-foreground">
+                    Mostrando {((currentPage - 1) * postsPerPage) + 1} a {Math.min(currentPage * postsPerPage, totalPosts)} de {totalPosts} posts
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Anterior
+                    </Button>
+                    
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePageChange(pageNum)}
+                            className="w-8 h-8 p-0"
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Próximo
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )
+    }
 

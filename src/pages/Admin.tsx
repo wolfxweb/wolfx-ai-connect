@@ -12,7 +12,8 @@ import {
   Plus,
   LogOut,
   BarChart3,
-  Calendar
+  Calendar,
+  MessageCircle
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -20,9 +21,10 @@ import { useNavigate } from 'react-router-dom'
 import CategoryManagement from '@/components/admin/CategoryManagement'
 import BlogManagement from '@/components/admin/BlogManagement'
 import UserManagement from '@/components/admin/UserManagement'
+import CommentModeration from '@/components/admin/CommentModeration'
 
 export default function Admin() {
-  const { user, signOut, isAdmin } = useAuth()
+  const { user, signOut, canAccessAdmin, userProfile } = useAuth()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('dashboard')
 
@@ -31,7 +33,7 @@ export default function Admin() {
     navigate('/')
   }
 
-  if (!isAdmin) {
+  if (!canAccessAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -138,7 +140,7 @@ export default function Admin() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="dashboard" className="flex items-center space-x-2">
               <BarChart3 className="h-4 w-4" />
               <span>Dashboard</span>
@@ -146,6 +148,10 @@ export default function Admin() {
             <TabsTrigger value="posts" className="flex items-center space-x-2">
               <FileText className="h-4 w-4" />
               <span>Posts</span>
+            </TabsTrigger>
+            <TabsTrigger value="comments" className="flex items-center space-x-2">
+              <MessageCircle className="h-4 w-4" />
+              <span>Comentários</span>
             </TabsTrigger>
             <TabsTrigger value="categories" className="flex items-center space-x-2">
               <FolderOpen className="h-4 w-4" />
@@ -168,19 +174,17 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="posts" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-3xl font-bold tracking-tight">Gerenciar Posts</h2>
-                <p className="text-muted-foreground">
-                  Crie e edite posts do seu blog
-                </p>
-              </div>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Post
-              </Button>
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">Gerenciar Posts</h2>
+              <p className="text-muted-foreground">
+                Crie e edite posts do seu blog
+              </p>
             </div>
             <BlogManagement />
+          </TabsContent>
+
+          <TabsContent value="comments" className="space-y-6">
+            <CommentModeration />
           </TabsContent>
 
           <TabsContent value="categories" className="space-y-6">

@@ -15,23 +15,35 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   
-  const { signIn } = useAuth()
+  const { signIn, userProfile, canAccessAdmin } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('🎯 Login form submitted', { email, password: '***' })
     setLoading(true)
     setError('')
 
-    const { error } = await signIn(email, password)
-    
-    if (error) {
-      setError(error.message)
-    } else {
-      navigate('/')
+    try {
+      console.log('⏳ Calling signIn...')
+      const { error } = await signIn(email, password)
+      console.log('📨 signIn response:', { error })
+      
+      if (error) {
+        console.log('❌ Login failed, setting error message')
+        setError(error.message)
+        setLoading(false)
+      } else {
+        console.log('✅ Login successful, redirecting...')
+        // Redirecionar imediatamente - o AuthContext vai cuidar do perfil
+        navigate('/')
+        setLoading(false)
+      }
+    } catch (err) {
+      console.error('💥 Login form error:', err)
+      setError('Erro inesperado ao fazer login')
+      setLoading(false)
     }
-    
-    setLoading(false)
   }
 
   return (

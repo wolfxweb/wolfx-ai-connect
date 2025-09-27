@@ -14,6 +14,7 @@ export default function Blog() {
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([])
@@ -29,18 +30,41 @@ export default function Blog() {
 
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
+      // Buscar posts publicados sem JOIN primeiro
+      const { data: postsData, error: postsError } = await supabase
         .from('blog_posts')
-        .select(`
-          *,
-          categories (name, slug),
-          profiles (name)
-        `)
+        .select('*')
         .eq('status', 'published')
         .order('published_at', { ascending: false })
 
-      if (error) throw error
-      setPosts(data || [])
+      if (postsError) throw postsError
+
+      // Buscar categorias separadamente
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('id, name, slug')
+
+      if (categoriesError) {
+        console.warn('Erro ao buscar categorias:', categoriesError)
+      }
+
+      // Buscar profiles separadamente
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name')
+
+      if (profilesError) {
+        console.warn('Erro ao buscar profiles:', profilesError)
+      }
+
+      // Combinar dados manualmente
+      const postsWithRelations = postsData?.map(post => ({
+        ...post,
+        categories: categoriesData?.find(cat => cat.id === post.category_id) || null,
+        profiles: profilesData?.find(prof => prof.id === post.author_id) || null
+      })) || []
+
+      setPosts(postsWithRelations)
     } catch (error) {
       console.error('Error fetching posts:', error)
       toast.error('Erro ao carregar posts')
@@ -51,6 +75,7 @@ export default function Blog() {
 
   const fetchCategories = async () => {
     try {
+      setCategoriesLoading(true)
       const { data, error } = await supabase
         .from('categories')
         .select('*')
@@ -60,6 +85,8 @@ export default function Blog() {
       setCategories(data || [])
     } catch (error) {
       console.error('Error fetching categories:', error)
+    } finally {
+      setCategoriesLoading(false)
     }
   }
 
@@ -133,20 +160,33 @@ export default function Blog() {
               </div>
               
               <div className="md:w-64">
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Todas as categorias" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Todas as categorias</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {categoriesLoading ? (
+                  <div className="flex items-center space-x-2 h-10 px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm text-gray-500">Carregando...</span>
+                  </div>
+                ) : (
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Todas as categorias</option>
+                    {categories && categories.length > 0 ? (
+                      categories
+                        .filter(category => category && category.id && category.name)
+                        .map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))
+                    ) : (
+                      <option value="" disabled>
+                        Nenhuma categoria disponível
+                      </option>
+                    )}
+                  </select>
+                )}
               </div>
             </div>
           </CardContent>

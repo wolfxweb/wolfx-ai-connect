@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Frontend - Criação de Posts</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0052a3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste Frontend - Criação de Posts</h1>
+        
+        <div class="test-section">
+            <h3>📋 Teste 1: Criação de Post Simples</h3>
+            <button onclick="testarPostSimples()">Criar Post Simples</button>
+            <div id="result1" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔍 Teste 2: Post com SEO Completo</h3>
+            <button onclick="testarPostSEO()">Criar Post com SEO</button>
+            <div id="result2" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>⏰ Teste 3: Post Agendado</h3>
+            <button onclick="testarPostAgendado()">Criar Post Agendado</button>
+            <div id="result3" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 Teste 4: Listar Posts</h3>
+            <button onclick="listarPosts()">Listar Todos os Posts</button>
+            <div id="result4" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>✏️ Teste 5: Editar Post</h3>
+            <input type="text" id="postId" placeholder="ID do Post para Editar">
+            <button onclick="testarEdicao()">Editar Post</button>
+            <div id="result5" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Supabase CDN -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <script>
+        // Configuração do Supabase
+        const supabaseUrl = 'https://supabase.wolfx.com.br';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.Mr2Z9_cUmM-LjhY5SvArT_78TPPiUh_hGITfq94KGbs';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // Função auxiliar para mostrar resultado
+        function mostrarResultado(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+            element.style.display = 'block';
+        }
+        
+        // Teste 1: Post Simples
+        async function testarPostSimples() {
+            try {
+                const { data, error } = await supabase
+                    .from('blog_posts')
+                    .insert([{
+                        title: 'Teste Simples - ' + new Date().toLocaleString(),
+                        slug: 'teste-simples-' + Date.now(),
+                        content: 'Post criado via JavaScript frontend simples.',
+                        excerpt: 'Resumo do teste simples.',
+                        status: 'draft'
+                    }])
+                    .select();
+                
+                if (error) {
+                    mostrarResultado('result1', `❌ Erro: ${error.message}`, 'error');
+                } else {
+                    mostrarResultado('result1', `✅ Post criado com sucesso!\n${JSON.stringify(data[0], null, 2)}`, 'success');
+                }
+            } catch (err) {
+                mostrarResultado('result1', `💥 Erro: ${err.message}`, 'error');
+            }
+        }
+        
+        // Teste 2: Post com SEO
+        async function testarPostSEO() {
+            try {
+                const { data, error } = await supabase
+                    .from('blog_posts')
+                    .insert([{
+                        title: 'Teste SEO Completo - ' + new Date().toLocaleString(),
+                        slug: 'teste-seo-completo-' + Date.now(),
+                        content: 'Post de teste com **SEO completo** incluindo todas as meta tags e otimizações.',
+                        excerpt: 'Resumo otimizado para SEO com palavras-chave relevantes.',
+                        status: 'draft',
+                        seo_title: 'Teste SEO: Post Completo com Meta Tags - WolfX AI',
+                        seo_description: 'Post de teste com SEO completo incluindo meta tags, palavras-chave e otimizações para motores de busca.',
+                        seo_keywords: ['teste', 'seo', 'meta-tags', 'otimização', 'wolfx'],
+                        meta_robots: 'index,follow'
+                    }])
+                    .select();
+                
+                if (error) {
+                    mostrarResultado('result2', `❌ Erro: ${error.message}`, 'error');
+                } else {
+                    mostrarResultado('result2', `✅ Post com SEO criado!\n${JSON.stringify(data[0], null, 2)}`, 'success');
+                }
+            } catch (err) {
+                mostrarResultado('result2', `💥 Erro: ${err.message}`, 'error');
+            }
+        }
+        
+        // Teste 3: Post Agendado
+        async function testarPostAgendado() {
+            try {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                
+                const { data, error } = await supabase
+                    .from('blog_posts')
+                    .insert([{
+                        title: 'Post Agendado - ' + new Date().toLocaleString(),
+                        slug: 'post-agendado-' + Date.now(),
+                        content: 'Este post foi agendado para ser publicado automaticamente.',
+                        excerpt: 'Resumo do post agendado para teste.',
+                        status: 'scheduled',
+                        scheduled_at: tomorrow.toISOString(),
+                        seo_title: 'Post Agendado: Teste de Funcionalidade - WolfX AI',
+                        seo_description: 'Post agendado para teste da funcionalidade de publicação automática.',
+                        seo_keywords: ['agendado', 'teste', 'automático'],
+                        meta_robots: 'index,follow'
+                    }])
+                    .select();
+                
+                if (error) {
+                    mostrarResultado('result3', `❌ Erro: ${error.message}`, 'error');
+                } else {
+                    mostrarResultado('result3', `✅ Post agendado criado!\n${JSON.stringify(data[0], null, 2)}`, 'success');
+                }
+            } catch (err) {
+                mostrarResultado('result3', `💥 Erro: ${err.message}`, 'error');
+            }
+        }
+        
+        // Teste 4: Listar Posts
+        async function listarPosts() {
+            try {
+                const { data, error } = await supabase
+                    .from('blog_posts')
+                    .select('id, title, status, seo_title, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+                
+                if (error) {
+                    mostrarResultado('result4', `❌ Erro: ${error.message}`, 'error');
+                } else {
+                    const postsText = data.map(post => 
+                        `ID: ${post.id}\nTítulo: ${post.title}\nStatus: ${post.status}\nSEO: ${post.seo_title || 'N/A'}\nCriado: ${new Date(post.created_at).toLocaleString()}\n---`
+                    ).join('\n');
+                    
+                    mostrarResultado('result4', `✅ ${data.length} posts encontrados:\n\n${postsText}`, 'success');
+                }
+            } catch (err) {
+                mostrarResultado('result4', `💥 Erro: ${err.message}`, 'error');
+            }
+        }
+        
+        // Teste 5: Editar Post
+        async function testarEdicao() {
+            const postId = document.getElementById('postId').value;
+            
+            if (!postId) {
+                mostrarResultado('result5', '⚠️ Digite o ID do post para editar', 'info');
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabase
+                    .from('blog_posts')
+                    .update({
+                        title: 'Post Editado - ' + new Date().toLocaleString(),
+                        seo_title: 'Post Editado: SEO Atualizado - WolfX AI',
+                        seo_description: 'Descrição SEO atualizada via JavaScript.',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', postId)
+                    .select();
+                
+                if (error) {
+                    mostrarResultado('result5', `❌ Erro: ${error.message}`, 'error');
+                } else if (data.length === 0) {
+                    mostrarResultado('result5', '⚠️ Post não encontrado com este ID', 'info');
+                } else {
+                    mostrarResultado('result5', `✅ Post editado com sucesso!\n${JSON.stringify(data[0], null, 2)}`, 'success');
+                }
+            } catch (err) {
+                mostrarResultado('result5', `💥 Erro: ${err.message}`, 'error');
+            }
+        }
+        
+        console.log('🎯 Teste Frontend carregado!');
+        console.log('📝 Acesse: http://localhost:8080/admin para ver os posts criados');
+    </script>
+</body>
+</html>

@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, Calendar, User, Tag, Share2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import Comments from '@/components/Comments'
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>()
@@ -23,26 +24,51 @@ export default function BlogPost() {
 
   const fetchPost = async (postSlug: string) => {
     try {
-      const { data, error } = await supabase
+      // Buscar post primeiro
+      const { data: postData, error: postError } = await supabase
         .from('blog_posts')
-        .select(`
-          *,
-          categories (name, slug),
-          profiles (name)
-        `)
+        .select('*')
         .eq('slug', postSlug)
         .eq('status', 'published')
         .single()
 
-      if (error) throw error
+      if (postError) throw postError
       
-      if (!data) {
+      if (!postData) {
         navigate('/blog')
         return
       }
 
-      setPost(data)
-      fetchRelatedPosts(data.category_id, data.id)
+      // Buscar categoria e perfil separadamente
+      const { data: categoryData, error: categoryError } = await supabase
+        .from('categories')
+        .select('id, name, slug')
+        .eq('id', postData.category_id)
+        .single()
+
+      if (categoryError) {
+        console.warn('Erro ao buscar categoria:', categoryError)
+      }
+
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .eq('id', postData.author_id)
+        .single()
+
+      if (profileError) {
+        console.warn('Erro ao buscar perfil:', profileError)
+      }
+
+      // Combinar dados manualmente
+      const postWithRelations = {
+        ...postData,
+        categories: categoryData || null,
+        profiles: profileData || null
+      }
+
+      setPost(postWithRelations)
+      fetchRelatedPosts(postData.category_id, postData.id)
     } catch (error) {
       console.error('Error fetching post:', error)
       toast.error('Erro ao carregar post')
@@ -54,21 +80,48 @@ export default function BlogPost() {
 
   const fetchRelatedPosts = async (categoryId: string, currentPostId: string) => {
     try {
-      const { data, error } = await supabase
+      // Buscar posts relacionados primeiro
+      const { data: relatedPostsData, error: postsError } = await supabase
         .from('blog_posts')
-        .select(`
-          *,
-          categories (name, slug),
-          profiles (name)
-        `)
+        .select('*')
         .eq('category_id', categoryId)
         .eq('status', 'published')
         .neq('id', currentPostId)
         .order('published_at', { ascending: false })
         .limit(3)
 
-      if (error) throw error
-      setRelatedPosts(data || [])
+      if (postsError) throw postsError
+
+      if (!relatedPostsData || relatedPostsData.length === 0) {
+        setRelatedPosts([])
+        return
+      }
+
+      // Buscar categorias e perfis separadamente
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('id, name, slug')
+
+      if (categoriesError) {
+        console.warn('Erro ao buscar categorias:', categoriesError)
+      }
+
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name')
+
+      if (profilesError) {
+        console.warn('Erro ao buscar profiles:', profilesError)
+      }
+
+      // Combinar dados manualmente
+      const relatedPostsWithRelations = relatedPostsData.map(relatedPost => ({
+        ...relatedPost,
+        categories: categoriesData?.find(cat => cat.id === relatedPost.category_id) || null,
+        profiles: profilesData?.find(prof => prof.id === relatedPost.author_id) || null
+      }))
+
+      setRelatedPosts(relatedPostsWithRelations)
     } catch (error) {
       console.error('Error fetching related posts:', error)
     }
@@ -80,6 +133,45 @@ export default function BlogPost() {
       month: 'long',
       day: 'numeric'
     })
+  }
+
+  const renderContent = (content: string) => {
+    if (!content) return null
+
+    // Processar formatação básica
+    let processedContent = content
+
+    // Converter quebras de linha para <br>
+    processedContent = processedContent.replace(/\n/g, '<br>')
+
+    // Processar negrito **texto**
+    processedContent = processedContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+
+    // Processar itálico *texto*
+    processedContent = processedContent.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
+
+    // Processar sublinhado <u>texto</u>
+    processedContent = processedContent.replace(/<u>(.*?)<\/u>/g, '<u>$1</u>')
+
+    // Processar links [texto](url)
+    processedContent = processedContent.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>')
+
+    // Processar listas com marcadores - item
+    processedContent = processedContent.replace(/^- (.+)$/gm, '<li>$1</li>')
+    processedContent = processedContent.replace(/(<li>.*<\/li>)/s, '<ul class="list-disc pl-6 my-4">$1</ul>')
+
+    // Processar listas numeradas 1. item
+    processedContent = processedContent.replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+    processedContent = processedContent.replace(/(<li>.*<\/li>)/s, '<ol class="list-decimal pl-6 my-4">$1</ol>')
+
+    // Processar citações > texto
+    processedContent = processedContent.replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-gray-300 pl-4 italic my-4">$1</blockquote>')
+
+    // Processar cabeçalhos ## Título
+    processedContent = processedContent.replace(/^## (.+)$/gm, '<h2 class="text-2xl font-bold mt-6 mb-4">$1</h2>')
+    processedContent = processedContent.replace(/^### (.+)$/gm, '<h3 class="text-xl font-bold mt-4 mb-2">$1</h3>')
+
+    return <div dangerouslySetInnerHTML={{ __html: processedContent }} />
   }
 
   const sharePost = async () => {
@@ -186,12 +278,9 @@ export default function BlogPost() {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-sm p-8">
-          <div 
-            className="prose prose-lg max-w-none"
-            dangerouslySetInnerHTML={{ 
-              __html: post.content.replace(/\n/g, '<br>') 
-            }}
-          />
+          <div className="prose prose-lg max-w-none">
+            {renderContent(post.content)}
+          </div>
           
           {post.tags && post.tags.length > 0 && (
             <div className="mt-8 pt-8 border-t">
@@ -208,6 +297,11 @@ export default function BlogPost() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Comentários */}
+        <div className="mt-12">
+          <Comments postId={post.id} />
         </div>
 
         {/* Related Posts */}

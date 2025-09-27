@@ -1,8 +1,25 @@
 import { Link } from "react-router-dom";
-import { Bot, Mail, Phone, MapPin } from "lucide-react";
+import { Bot, Mail, Phone, MapPin, Settings, Shield, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { user, userProfile, canAccessAdmin } = useAuth();
+
+  const getRoleBadge = () => {
+    if (!userProfile) return null;
+    
+    switch (userProfile.role) {
+      case 'admin':
+        return <Badge variant="secondary" className="bg-red-100 text-red-800 text-xs"><Shield className="h-3 w-3 mr-1" />Admin</Badge>
+      case 'moderator':
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs"><User className="h-3 w-3 mr-1" />Moderador</Badge>
+      default:
+        return <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs"><User className="h-3 w-3 mr-1" />Usuário</Badge>
+    }
+  };
 
   return (
     <footer className="bg-primary text-primary-foreground">
@@ -21,6 +38,34 @@ const Footer = () => {
               de atendimento, agendamento e vendas, liberando seu tempo para focar no 
               crescimento do seu negócio.
             </p>
+            
+            {/* Status do usuário e botão admin */}
+            {user && (
+              <div className="mb-4 p-3 bg-primary-foreground/10 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    <User className="w-4 h-4" />
+                    <span className="text-sm font-medium">
+                      {userProfile?.name || user.email}
+                    </span>
+                    {getRoleBadge()}
+                  </div>
+                </div>
+                {canAccessAdmin && (
+                  <Link to="/admin">
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      className="w-full bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-primary-foreground/30"
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Painel Administrativo
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            )}
+            
             <div className="flex space-x-4">
               <div className="flex items-center space-x-2 text-sm">
                 <Mail className="w-4 h-4" />
@@ -67,6 +112,11 @@ const Footer = () => {
               <li>
                 <Link to="/" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
                   Início
+                </Link>
+              </li>
+              <li>
+                <Link to="/blog" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+                  Blog
                 </Link>
               </li>
               <li>

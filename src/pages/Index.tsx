@@ -14,10 +14,12 @@ import {
   Zap,
   Target,
   Clock,
-  Shield
+  Shield,
+  Database
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-wolfx.jpg";
+import SupabaseTest from "@/components/SupabaseTest";
 
 const Index = () => {
   const services = [
@@ -367,6 +369,25 @@ const Index = () => {
                 </Card>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Supabase Connection Test */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center mb-4">
+              <Database className="h-8 w-8 text-blue-600 mr-3" />
+              <h2 className="text-3xl font-bold">Teste de Conexão</h2>
+            </div>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Verifique se o sistema está funcionando corretamente e se a conexão com o Supabase está ativa.
+            </p>
+          </div>
+          
+          <div className="flex justify-center">
+            <SupabaseTest />
           </div>
         </div>
       </section>

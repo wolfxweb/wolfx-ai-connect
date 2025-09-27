@@ -1,73 +1,214 @@
-# Welcome to your Lovable project
+# WolfX AI Connect - Sistema Completo com Supabase
 
-## Project info
+Sistema completo de autenticação, painel administrativo e blog integrado com Supabase.
 
-**URL**: https://lovable.dev/projects/164f9ba5-57b7-407b-a299-df4aa32e09ff
+## 🚀 Funcionalidades Implementadas
 
-## How can I edit this code?
+### ✅ Autenticação Completa
+- Login e registro de usuários
+- Proteção de rotas
+- Gerenciamento de sessão
+- Sistema de roles (admin/user)
+- Interface moderna e responsiva
 
-There are several ways of editing your application.
+### ✅ Painel Administrativo
+- Dashboard com estatísticas
+- CRUD completo de categorias
+- CRUD completo de posts do blog
+- Gerenciamento de usuários
+- Interface intuitiva com tabs
 
-**Use Lovable**
+### ✅ Sistema de Blog
+- Listagem pública de posts
+- Página individual de posts
+- Sistema de busca e filtros
+- Posts relacionados
+- Compartilhamento de posts
+- Categorização
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/164f9ba5-57b7-407b-a299-df4aa32e09ff) and start prompting.
+### ✅ Infraestrutura
+- Containerização com Docker
+- Integração com Supabase
+- Row Level Security (RLS)
+- Políticas de acesso
+- Hot-reload para desenvolvimento
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠️ Tecnologias Utilizadas
 
-**Use your preferred IDE**
+- **Frontend**: React 18, TypeScript, Vite
+- **UI**: Tailwind CSS, Shadcn/ui
+- **Backend**: Supabase (PostgreSQL + Auth + Storage)
+- **Containerização**: Docker + Docker Compose
+- **Roteamento**: React Router DOM
+- **Gerenciamento de Estado**: React Context
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 📋 Pré-requisitos
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Docker e Docker Compose
+- Conta no Supabase
+- Node.js 18+ (para desenvolvimento local)
 
-Follow these steps:
+## 🚀 Instalação e Configuração
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### 1. Configurar Variáveis de Ambiente
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Crie um arquivo `.env` na raiz do projeto:
 
-# Step 3: Install the necessary dependencies.
-npm i
+```env
+# Supabase Configuration
+VITE_SUPABASE_URL=https://supabase.wolfx.com.br
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.Mr2Z9_cUmM-LjhY5SvArT_78TPPiUh_hGITfq94KGbs
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Development
+NODE_ENV=development
 ```
 
-**Edit a file directly in GitHub**
+### 2. Configurar Banco de Dados
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. Acesse o painel do Supabase: https://supabase.wolfx.com.br
+2. Vá para "SQL Editor"
+3. Execute o conteúdo do arquivo `supabase-setup.sql`
 
-**Use GitHub Codespaces**
+### 3. Tornar um Usuário Admin
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Após criar sua conta:
+```sql
+UPDATE profiles SET role = 'admin' WHERE email = 'seu-email@exemplo.com';
+```
 
-## What technologies are used for this project?
+### 4. Iniciar a Aplicação
 
-This project is built with:
+```bash
+# Desenvolvimento
+docker-compose --profile dev up --build
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Produção
+docker-compose --profile prod up --build
 
-## How can I deploy this project?
+# Testar build local
+npm run build
+docker-compose --profile local up --build
+```
 
-Simply open [Lovable](https://lovable.dev/projects/164f9ba5-57b7-407b-a299-df4aa32e09ff) and click on Share -> Publish.
+## 🌐 URLs de Acesso
 
-## Can I connect a custom domain to my Lovable project?
+- **Aplicação**: http://localhost:8080
+- **Login**: http://localhost:8080/login
+- **Registro**: http://localhost:8080/register
+- **Painel Admin**: http://localhost:8080/admin
+- **Blog**: http://localhost:8080/blog
 
-Yes, you can!
+## 📊 Estrutura do Banco de Dados
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Tabelas Principais
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+1. **profiles** - Perfis dos usuários
+2. **categories** - Categorias do blog
+3. **blog_posts** - Posts do blog
+
+### Relacionamentos
+
+- `profiles` ← `auth.users` (1:1)
+- `categories` ← `profiles` (N:1)
+- `blog_posts` ← `categories` (N:1)
+- `blog_posts` ← `profiles` (N:1)
+
+## 🔐 Segurança
+
+- **Row Level Security (RLS)** habilitado em todas as tabelas
+- **Políticas de acesso** configuradas
+- **Validação de permissões** no frontend e backend
+- **Tokens JWT** do Supabase para autenticação
+
+## 📱 Responsividade
+
+- Design totalmente responsivo
+- Navegação mobile otimizada
+- Interface adaptativa para todos os dispositivos
+
+## 🎨 Interface
+
+- Design moderno com Tailwind CSS
+- Componentes reutilizáveis com Shadcn/ui
+- Tema consistente em toda aplicação
+- Animações e transições suaves
+
+## 🔧 Comandos Úteis
+
+```bash
+# Parar containers
+docker-compose down
+
+# Limpar containers
+docker-compose down -v
+docker system prune -f
+
+# Ver logs
+docker-compose logs -f
+
+# Entrar no container
+docker-compose exec wolfx-ai-connect-dev sh
+
+# Rebuild completo
+docker-compose build --no-cache
+```
+
+## 📁 Estrutura do Projeto
+
+```
+src/
+├── components/
+│   ├── admin/           # Componentes do painel admin
+│   └── ui/             # Componentes UI reutilizáveis
+├── contexts/
+│   └── AuthContext.tsx # Contexto de autenticação
+├── hooks/              # Custom hooks
+├── lib/
+│   └── supabase.ts     # Configuração do Supabase
+├── pages/              # Páginas da aplicação
+│   ├── Login.tsx
+│   ├── Register.tsx
+│   ├── Admin.tsx
+│   ├── Blog.tsx
+│   └── BlogPost.tsx
+└── App.tsx             # Componente principal
+```
+
+## 🐛 Troubleshooting
+
+### Problemas Comuns
+
+1. **Erro de conexão com Supabase**
+   - Verifique as variáveis de ambiente
+   - Confirme se o projeto existe no Supabase
+
+2. **Usuário não consegue acessar admin**
+   - Execute: `UPDATE profiles SET role = 'admin' WHERE email = 'seu-email';`
+
+3. **Posts não aparecem**
+   - Verifique se o status está como 'published'
+   - Confirme as políticas RLS
+
+4. **Container não inicia**
+   - Limpe containers antigos: `docker container prune -f`
+   - Rebuild: `docker-compose build --no-cache`
+
+## 📈 Próximos Passos
+
+- [ ] Sistema de comentários nos posts
+- [ ] Upload de imagens
+- [ ] Sistema de notificações
+- [ ] Analytics de posts
+- [ ] SEO otimizado
+- [ ] PWA (Progressive Web App)
+
+## 📞 Suporte
+
+Para dúvidas ou problemas, consulte:
+- [Documentação do Supabase](https://supabase.com/docs)
+- [Documentação do React](https://react.dev)
+- [Documentação do Docker](https://docs.docker.com)
+
+---
+
+**Desenvolvido com ❤️ para WolfX AI Connect**

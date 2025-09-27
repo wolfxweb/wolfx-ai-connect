@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Bot } from "lucide-react";
+import { Menu, X, Bot, LogOut, Settings, FileText, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut, isAdmin } = useAuth();
 
   const navItems = [
     { name: "Início", path: "/" },
@@ -13,6 +16,7 @@ const Navigation = () => {
     { name: "AAQ - Qualificação", path: "/aaq" },
     { name: "ASF - Suporte", path: "/asf" },
     { name: "AVF - Vendas", path: "/avf" },
+    { name: "Blog", path: "/blog" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -44,11 +48,44 @@ const Navigation = () => {
             ))}
           </div>
 
-          {/* CTA Button */}
-          <div className="hidden lg:block">
-            <Button className="glow-button text-primary-foreground hover:text-primary-foreground">
-              Agende uma Consultoria
-            </Button>
+          {/* User Actions */}
+          <div className="hidden lg:flex items-center space-x-4">
+            {user ? (
+              <div className="flex items-center space-x-2">
+                {isAdmin && (
+                  <Link to="/admin">
+                    <Button variant="outline" size="sm">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
+                <Badge variant="secondary" className="flex items-center space-x-1">
+                  <User className="h-3 w-3" />
+                  <span>{user.email}</span>
+                </Badge>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => signOut()}
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Link to="/login">
+                  <Button variant="ghost" size="sm">
+                    Entrar
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button size="sm">
+                    Cadastrar
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -80,9 +117,49 @@ const Navigation = () => {
                   {item.name}
                 </Link>
               ))}
-              <Button className="glow-button text-primary-foreground hover:text-primary-foreground mt-4">
-                Agende uma Consultoria
-              </Button>
+              
+              {user ? (
+                <div className="flex flex-col space-y-2 pt-4 border-t border-border">
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <User className="h-4 w-4" />
+                    <span>{user.email}</span>
+                    {isAdmin && <Badge variant="secondary">Admin</Badge>}
+                  </div>
+                  {isAdmin && (
+                    <Link to="/admin" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Painel Admin
+                      </Button>
+                    </Link>
+                  )}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      signOut()
+                      setIsOpen(false)
+                    }}
+                    className="w-full justify-start"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col space-y-2 pt-4 border-t border-border">
+                  <Link to="/login" onClick={() => setIsOpen(false)}>
+                    <Button variant="ghost" size="sm" className="w-full">
+                      Entrar
+                    </Button>
+                  </Link>
+                  <Link to="/register" onClick={() => setIsOpen(false)}>
+                    <Button size="sm" className="w-full">
+                      Cadastrar
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}

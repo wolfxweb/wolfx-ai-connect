@@ -13,7 +13,7 @@ services:
         - "traefik.http.routers.wolfx-ai-connect.entrypoints=websecure"
         - "traefik.http.routers.wolfx-ai-connect.tls.certresolver=letsencrypt"
         - "traefik.http.services.wolfx-ai-connect.loadbalancer.server.port=80"
-        - "traefik.docker.network=traefik_traefik"
+        - "traefik.docker.network=ingress"
         - "traefik.http.routers.wolfx-ai-connect.priority=100"
     environment:
       - NODE_ENV=production
@@ -22,7 +22,7 @@ services:
     volumes:
       - nginx_cache:/var/cache/nginx
     networks:
-      - traefik_traefik
+      - ingress
 
   # Traefik já existe no servidor, não precisamos criar outro
 
@@ -30,5 +30,5 @@ volumes:
   nginx_cache:
 
 networks:
-  traefik_traefik:
+  ingress:
     external: true

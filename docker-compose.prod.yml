@@ -5,8 +5,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    container_name: wolfxaiconnectprod
-    restart: unless-stopped
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.wolfx.rule=Host(`wolfx.com.br`)"
+        - "traefik.http.routers.wolfx.entrypoints=websecure"
+        - "traefik.http.routers.wolfx.tls.certresolver=letsencrypt"
+        - "traefik.http.services.wolfx.loadbalancer.server.port=80"
+        - "traefik.docker.network=wolfx-network"
+        - "traefik.http.middlewares.wolfx-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+        - "traefik.http.routers.wolfx.middlewares=wolfx-headers"
     environment:
       - NODE_ENV=production
       - VITE_SUPABASE_URL=https://supabase.wolfx.com.br
@@ -15,23 +26,19 @@ services:
       - nginx_cache:/var/cache/nginx
     networks:
       - wolfx-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.wolfx.rule=Host(`wolfx.com.br`)"
-      - "traefik.http.routers.wolfx.entrypoints=websecure"
-      - "traefik.http.routers.wolfx.tls.certresolver=letsencrypt"
-      - "traefik.http.services.wolfx.loadbalancer.server.port=80"
-      - "traefik.docker.network=wolfx-network"
-      - "traefik.http.middlewares.wolfx-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.middlewares.wolfx-headers.headers.customrequestheaders.X-Forwarded-For="
-      - "traefik.http.middlewares.wolfx-headers.headers.customrequestheaders.X-Real-IP="
-      - "traefik.http.routers.wolfx.middlewares=wolfx-headers"
 
   # Traefik como proxy reverso
   traefik:
     image: traefik:v3.0
-    container_name: traefik
-    restart: unless-stopped
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+      placement:
+        constraints:
+          - node.role == manager
     command:
       - "--api.dashboard=true"
       - "--api.insecure=true"

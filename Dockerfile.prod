@@ -8,7 +8,7 @@ COPY package*.json ./
 COPY bun.lockb ./
 
 # Instalar dependências
-RUN npm ci
+RUN npm ci --only=production
 
 # Copiar código fonte
 COPY . .

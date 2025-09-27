@@ -91,10 +91,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       if (error) {
         // Tratar erros específicos
-        if (error.message.includes('Email signups are disabled')) {
+        if (error.message.includes('Email signups are disabled') || 
+            error.message.includes('signup is disabled') ||
+            error.message.includes('Signup is disabled')) {
           return { 
             error: { 
-              message: 'Registro por email está desabilitado. Entre em contato com o administrador.' 
+              message: 'Registro temporariamente indisponível. Execute o script fix-email-signup.sql no Supabase ou tente novamente em alguns minutos.' 
             } 
           }
         }

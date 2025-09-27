@@ -11,7 +11,7 @@ services:
         - "traefik.enable=true"
         - "traefik.http.routers.wolfx-ai-connect.rule=Host(`wolfx.com.br`)"
         - "traefik.http.routers.wolfx-ai-connect.entrypoints=websecure"
-        - "traefik.http.routers.wolfx-ai-connect.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.wolfx-ai-connect.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.wolfx-ai-connect.loadbalancer.server.port=80"
         - "traefik.docker.network=server"
         - "traefik.http.routers.wolfx-ai-connect.priority=100"

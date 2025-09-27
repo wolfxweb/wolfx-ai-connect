@@ -64,4 +64,4 @@ volumes:
 
 networks:
   wolfx-network:
-    external: true
+    driver: overlay

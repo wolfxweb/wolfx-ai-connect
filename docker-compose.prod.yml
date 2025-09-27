@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    container_name: wolfx-ai-connect-prod
+    container_name: wolfxaiconnectprod
     restart: unless-stopped
     environment:
       - NODE_ENV=production

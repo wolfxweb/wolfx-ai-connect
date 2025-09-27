@@ -1,32 +1,24 @@
 #!/bin/bash
 
-# Script para build de produção
-echo "🚀 Iniciando build de produção..."
+# Script para build da imagem de produção
+echo "🚀 Building production image..."
 
-# Parar containers existentes
-echo "🛑 Parando containers existentes..."
-docker-compose -f docker-compose.prod.yml down
+# Build da imagem
+docker build -f Dockerfile.prod -t wolfx-ai-connect:latest .
 
-# Remover imagens antigas
-echo "🗑️ Removendo imagens antigas..."
-docker image prune -f
-
-# Build da nova imagem
-echo "🔨 Fazendo build da nova imagem..."
-docker-compose -f docker-compose.prod.yml build --no-cache
-
-# Criar rede se não existir
-echo "🌐 Criando rede Docker..."
-docker network create wolfx-network 2>/dev/null || echo "Rede já existe"
-
-# Iniciar containers
-echo "▶️ Iniciando containers..."
-docker-compose -f docker-compose.prod.yml up -d
-
-# Verificar status
-echo "✅ Verificando status dos containers..."
-docker-compose -f docker-compose.prod.yml ps
-
-echo "🎉 Deploy concluído!"
-echo "📱 Acesse: https://wolfx.com.br"
-echo "🔧 Traefik Dashboard: http://$(hostname -I | awk '{print $1}'):8080"
+# Verificar se o build foi bem-sucedido
+if [ $? -eq 0 ]; then
+    echo "✅ Build completed successfully!"
+    echo "📦 Image: wolfx-ai-connect:latest"
+    
+    # Mostrar informações da imagem
+    docker images wolfx-ai-connect:latest
+    
+    echo ""
+    echo "🎯 Next steps:"
+    echo "1. Deploy the stack in Portainer"
+    echo "2. The image is ready to use!"
+else
+    echo "❌ Build failed!"
+    exit 1
+fi

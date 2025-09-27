@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   wolfx-ai-connect:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
+    image: wolfx-ai-connect:latest
     deploy:
       replicas: 1
       restart_policy:

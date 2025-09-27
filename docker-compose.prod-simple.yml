@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  wolfx-ai-connect:
+    image: wolfx-ai-connect:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.wolfx.rule=Host(`wolfx.com.br`)"
+        - "traefik.http.routers.wolfx.entrypoints=websecure"
+        - "traefik.http.routers.wolfx.tls.certresolver=letsencrypt"
+        - "traefik.http.services.wolfx.loadbalancer.server.port=80"
+        - "traefik.docker.network=server"
+    environment:
+      - NODE_ENV=production
+      - VITE_SUPABASE_URL=https://supabase.wolfx.com.br
+      - VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.Mr2Z9_cUmM-LjhY5SvArT_78TPPiUh_hGITfq94KGbs
+    volumes:
+      - nginx_cache:/var/cache/nginx
+    networks:
+      - server
+
+volumes:
+  nginx_cache:
+
+networks:
+  server:
+    external: true

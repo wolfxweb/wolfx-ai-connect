@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle, XCircle, Loader2, Facebook, Globe, Activity } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2, Facebook, Globe, Activity, Target } from 'lucide-react'
 
 export default function TagsTest() {
   const [testing, setTesting] = useState(false)
@@ -10,6 +10,7 @@ export default function TagsTest() {
     metaPixel: boolean
     gtm: boolean
     dataLayer: boolean
+    googleAds: boolean
     errors: string[]
   } | null>(null)
 
@@ -25,11 +26,13 @@ export default function TagsTest() {
       metaPixel: boolean
       gtm: boolean
       dataLayer: boolean
+      googleAds: boolean
       errors: string[]
     } = {
       metaPixel: false,
       gtm: false,
       dataLayer: false,
+      googleAds: false,
       errors: []
     }
 
@@ -61,6 +64,15 @@ export default function TagsTest() {
         errors.push('DataLayer não encontrado. Verifique se o GTM está carregando.')
       }
 
+      // Test 4: Google Ads (gtag)
+      if (typeof (window as any).gtag !== 'undefined') {
+        results.googleAds = true
+        console.log('✅ Google Ads (gtag) encontrado')
+      } else {
+        results.googleAds = false
+        errors.push('Google Ads (gtag) não encontrado. Verifique se o script está carregando.')
+      }
+
       results.errors = errors
       setResults(results)
     } catch (error: any) {
@@ -68,6 +80,7 @@ export default function TagsTest() {
         metaPixel: false,
         gtm: false,
         dataLayer: false,
+        googleAds: false,
         errors: [error.message || 'Erro ao testar tags']
       })
     } finally {
@@ -122,6 +135,15 @@ export default function TagsTest() {
       details.gtm.containers = Object.keys((window as any).google_tag_manager)
     }
 
+    // Google Ads details
+    if (typeof (window as any).gtag !== 'undefined') {
+      details.googleAds = {
+        loaded: true,
+        conversionId: 'AW-661456616',
+        dataLayer: (window as any).dataLayer || []
+      }
+    }
+
     return details
   }
 
@@ -132,7 +154,7 @@ export default function TagsTest() {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Activity className="h-6 w-6" />
-          <span>Teste de Tags - Meta Pixel e Google Tag Manager</span>
+          <span>Teste de Tags - Meta Pixel, GTM e Google Ads</span>
         </CardTitle>
         <CardDescription>
           Verifique se as tags estão carregando corretamente
@@ -196,6 +218,21 @@ export default function TagsTest() {
               {getStatusBadge(results.dataLayer)}
             </div>
 
+            {/* Google Ads Test */}
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Target className="h-5 w-5 text-red-600" />
+                {getStatusIcon(results.googleAds)}
+                <div>
+                  <div className="font-medium">Google Ads (gtag)</div>
+                  <div className="text-sm text-muted-foreground">
+                    Conversion ID: AW-661456616
+                  </div>
+                </div>
+              </div>
+              {getStatusBadge(results.googleAds)}
+            </div>
+
             {/* Error Messages */}
             {results.errors.length > 0 && (
               <Alert variant="destructive">
@@ -211,7 +248,7 @@ export default function TagsTest() {
             )}
 
             {/* Success Message */}
-            {results.metaPixel && results.gtm && results.dataLayer && (
+            {results.metaPixel && results.gtm && results.dataLayer && results.googleAds && (
               <Alert>
                 <CheckCircle className="h-4 w-4" />
                 <AlertDescription>
@@ -244,8 +281,20 @@ export default function TagsTest() {
               </div>
             )}
 
+            {tagDetails.googleAds && (
+              <div className="p-4 border rounded-lg bg-gray-50">
+                <h4 className="font-semibold mb-2">Google Ads Details:</h4>
+                <pre className="text-xs overflow-auto">
+                  {JSON.stringify({
+                    conversionId: tagDetails.googleAds.conversionId,
+                    loaded: tagDetails.googleAds.loaded
+                  }, null, 2)}
+                </pre>
+              </div>
+            )}
+
             {/* Troubleshooting */}
-            {(!results.metaPixel || !results.gtm || !results.dataLayer) && (
+            {(!results.metaPixel || !results.gtm || !results.dataLayer || !results.googleAds) && (
               <Alert variant="destructive">
                 <AlertDescription>
                   <strong>Problemas Detectados:</strong>
@@ -258,6 +307,9 @@ export default function TagsTest() {
                     )}
                     {!results.dataLayer && (
                       <li>DataLayer não está disponível. Verifique se o GTM está configurado corretamente.</li>
+                    )}
+                    {!results.googleAds && (
+                      <li>Google Ads (gtag) não está carregando. Verifique o console do navegador.</li>
                     )}
                     <li>Desative bloqueadores de anúncios (uBlock, AdBlock)</li>
                     <li>Limpe o cache do navegador</li>
@@ -277,6 +329,8 @@ export default function TagsTest() {
                 <div className="text-gray-600">window.dataLayer</div>
                 <div className="mt-2">// Verificar eventos</div>
                 <div className="text-gray-600">window.dataLayer.filter(i =&gt; i.event)</div>
+                <div className="mt-2">// Verificar Google Ads</div>
+                <div className="text-gray-600">typeof gtag !== 'undefined'</div>
               </div>
             </div>
           </div>

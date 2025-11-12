@@ -1,7 +1,7 @@
 // Script para testar tags - Execute no console do navegador (F12)
 // Ou cole este código no console após carregar a página
 
-console.log('🧪 TESTE DE TAGS - Meta Pixel e Google Tag Manager\n');
+console.log('🧪 TESTE DE TAGS - Meta Pixel, Google Tag Manager e Google Ads\n');
 console.log('─'.repeat(60));
 
 // Teste 1: Meta Pixel
@@ -51,14 +51,35 @@ if (window.google_tag_manager) {
   console.log('   ⚠️ google_tag_manager não encontrado (pode ser normal)');
 }
 
-// Teste 3: Verificar requisições
-console.log('\n3️⃣ Verificação de Requisições:');
+// Teste 3: Google Ads (gtag)
+console.log('\n3️⃣ Google Ads (gtag):');
+if (typeof gtag !== 'undefined') {
+  console.log('   ✅ Google Ads (gtag) carregado com sucesso!');
+  console.log('   📊 Conversion ID: AW-661456616');
+  console.log('   🔍 Tipo:', typeof gtag);
+  
+  // Testar disparo de evento
+  try {
+    gtag('event', 'test_event', {test: true});
+    console.log('   ✅ Evento de teste disparado com sucesso!');
+  } catch (e) {
+    console.log('   ⚠️ Erro ao disparar evento:', e.message);
+  }
+} else {
+  console.log('   ❌ Google Ads (gtag) NÃO encontrado!');
+  console.log('   💡 Verifique se o script está no index.html');
+  console.log('   💡 Verifique se há bloqueadores de anúncios ativos');
+}
+
+// Teste 4: Verificar requisições
+console.log('\n4️⃣ Verificação de Requisições:');
 console.log('   💡 Abra a aba Network (F12) e verifique:');
 console.log('      - Requisições para connect.facebook.net');
 console.log('      - Requisições para googletagmanager.com');
+console.log('      - Requisições para googletagmanager.com/gtag/js?id=AW-661456616');
 
-// Teste 4: Teste de eventos
-console.log('\n4️⃣ Teste de Eventos:');
+// Teste 5: Teste de eventos
+console.log('\n5️⃣ Teste de Eventos:');
 try {
   // Disparar evento no DataLayer
   window.dataLayer = window.dataLayer || [];
@@ -79,13 +100,15 @@ console.log('📊 RESUMO:');
 console.log(`   Meta Pixel: ${typeof fbq !== 'undefined' ? '✅ OK' : '❌ ERRO'}`);
 console.log(`   DataLayer: ${window.dataLayer ? '✅ OK' : '❌ ERRO'}`);
 console.log(`   GTM: ${window.google_tag_manager ? '✅ OK' : '⚠️ Não detectado'}`);
+console.log(`   Google Ads: ${typeof gtag !== 'undefined' ? '✅ OK' : '❌ ERRO'}`);
 
-if (typeof fbq !== 'undefined' && window.dataLayer) {
+if (typeof fbq !== 'undefined' && window.dataLayer && typeof gtag !== 'undefined') {
   console.log('\n✅ Todas as tags estão funcionando corretamente!');
   console.log('💡 Próximos passos:');
   console.log('   1. Verifique o Facebook Events Manager');
   console.log('   2. Verifique o Google Tag Manager Preview Mode');
-  console.log('   3. Use as extensões do Chrome para validação');
+  console.log('   3. Verifique o Google Ads Conversion Tracking');
+  console.log('   4. Use as extensões do Chrome para validação');
 } else {
   console.log('\n⚠️ Algumas tags não estão carregando corretamente.');
   console.log('💡 Verifique:');

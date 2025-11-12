@@ -2,80 +2,97 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Bot, 
-  Calendar, 
-  Users, 
-  HeadphonesIcon, 
-  TrendingUp, 
-  CheckCircle, 
   ArrowRight,
-  Smartphone,
-  MessageCircle,
   Zap,
-  Target,
-  Clock,
+  Code,
+  Rocket,
+  TrendingUp,
+  Map,
+  Brain,
+  Layers,
   Shield,
+  BarChart3,
+  DollarSign,
+  UserCircle,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-wolfx.jpg";
 
 const Index = () => {
-  const services = [
+  const whatsappLink = "https://wa.me/5548988114708";
+  const whatsappMessage = "Olá! Gostaria de saber mais sobre as soluções de IA e Automação de Processos da Wolfx.";
+  
+  const nexusPhases = [
     {
-      id: "aai",
-      title: "AAI - Agente de Agendamento Inteligente",
-      description: "Automatize agendamentos, confirmações e lembretes 24/7",
-      icon: Calendar,
-      benefits: ["Redução de no-shows", "Agenda otimizada", "Atendimento 24/7"],
-      path: "/aai"
+      letter: "N",
+      title: "Necessidade e Arquitetura",
+      description: "Iniciamos com uma imersão completa nos seus processos e objetivos de negócio. Definimos a arquitetura de software mais robusta e escalável, identificando os pontos críticos onde a IA e a Automação trarão o maior retorno sobre o investimento (ROI).",
+      icon: Map,
+      color: "text-blue-600"
     },
     {
-      id: "aaq", 
-      title: "AAQ - Agente de Atendimento e Qualificação",
-      description: "Qualifique leads e otimize o atendimento inicial",
-      icon: Users,
-      benefits: ["Leads qualificados", "Triagem automática", "Economia de tempo"],
-      path: "/aaq"
+      letter: "E",
+      title: "Execução Ágil e Transparente",
+      description: "Utilizamos metodologias ágeis para desenvolver o seu sistema em ciclos curtos e transparentes. O foco é na entrega contínua de valor, garantindo que você acompanhe o progresso e forneça feedback em todas as etapas, desde o MVP (Produto Mínimo Viável) até a versão final.",
+      icon: Rocket,
+      color: "text-green-600"
     },
     {
-      id: "asf",
-      title: "ASF - Agente de Suporte e FAQ", 
-      description: "Suporte 24/7 com respostas imediatas e precisas",
-      icon: HeadphonesIcon,
-      benefits: ["Suporte 24/7", "Respostas consistentes", "Satisfação do cliente"],
-      path: "/asf"
+      letter: "X",
+      title: "X-Factor: IA e Automação",
+      description: "Esta é a nossa especialidade. Integramos o X-Factor da Wolfx, que é a aplicação de Inteligência Artificial e Automação de Processos para criar um diferencial competitivo. Seja com chatbots inteligentes, sistemas de recomendação, análise preditiva ou workflows automatizados, seu sistema será autônomo e inteligente.",
+      icon: Brain,
+      color: "text-purple-600"
     },
     {
-      id: "avf",
-      title: "AVF - Agente de Vendas e Fechamento",
-      description: "Multiplique suas vendas com IA especializada",
+      letter: "U",
+      title: "Upgrade e Otimização Contínua",
+      description: "O lançamento é apenas o começo. Realizamos testes rigorosos de performance e segurança e, mais importante, planejamos o Upgrade Contínuo. Nossos sistemas são projetados para aprender e evoluir, garantindo que a sua plataforma se mantenha otimizada e à frente das tendências tecnológicas.",
       icon: TrendingUp,
-      benefits: ["Aumento de conversões", "Vendas escaláveis", "ROI comprovado"],
-      path: "/avf"
+      color: "text-orange-600"
+    },
+    {
+      letter: "S",
+      title: "Suporte Estratégico",
+      description: "Oferecemos um Suporte Estratégico completo, que vai além da manutenção técnica. Nossa equipe atua como um parceiro de tecnologia, fornecendo monitoramento proativo, consultoria para novas funcionalidades e garantia de que sua solução continue gerando valor a longo prazo.",
+      icon: Shield,
+      color: "text-indigo-600"
     }
   ];
 
-  const problems = [
-    "Sobrecarga de atendimento manual",
-    "Perda de agendamentos e leads",
-    "Tempo gasto em tarefas repetitivas", 
-    "Inconsistência no atendimento",
-    "Dificuldade para escalar vendas"
+  const specialties = [
+    {
+      title: "Marketplaces",
+      description: "Plataformas personalizadas que conectam compradores e vendedores com IA integrada",
+      icon: Code
+    },
+    {
+      title: "SaaS",
+      description: "Soluções de software como serviço escaláveis e inteligentes",
+      icon: Zap
+    },
+    {
+      title: "Plataformas Personalizadas",
+      description: "Sistemas sob medida que atendem às suas necessidades atuais e futuras",
+      icon: Layers
+    }
   ];
 
-  const clients = [
-    { type: "Dentistas", icon: "🦷" },
-    { type: "Médicos", icon: "👨‍⚕️" },  
-    { type: "Advogados", icon: "⚖️" },
-    { type: "Consultores", icon: "💼" },
-    { type: "PMEs", icon: "🏢" }
-  ];
-
-  const process = [
-    { step: "1", title: "Descoberta", description: "Analisamos seu negócio e necessidades" },
-    { step: "2", title: "Desenvolvimento", description: "Criamos seu agente personalizado" },
-    { step: "3", title: "Lançamento", description: "Implementamos e treinamos sua equipe" },
-    { step: "4", title: "Otimização", description: "Monitoramos e aprimoramos continuamente" }
+  const aiCapabilities = [
+    {
+      title: "Otimizar a Tomada de Decisão",
+      description: "Com Machine Learning e Analytics avançados",
+      icon: BarChart3
+    },
+    {
+      title: "Reduzir Custos Operacionais",
+      description: "Através da Automação Inteligente de tarefas repetitivas",
+      icon: DollarSign
+    },
+    {
+      title: "Personalizar a Experiência do Usuário",
+      description: "Criando interações mais relevantes e engajadoras",
+      icon: UserCircle
+    }
   ];
 
   return (
@@ -86,30 +103,39 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="text-center lg:text-left">
               <Badge className="mb-6 accent-button">
-                🚀 Líderes em Automação com IA
+                🤖 Inteligência Artificial e Automação de Processos
               </Badge>
               <h1 className="text-4xl lg:text-6xl font-bold text-primary-foreground mb-6">
-                WolfX: Automação Inteligente para o Crescimento do Seu Negócio no 
-                <span className="text-accent"> WhatsApp</span>
+                O Futuro da Sua Operação Começa Aqui
               </h1>
               <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl">
-                Implementamos Agentes de IA personalizados que otimizam seu atendimento, 
-                agendamento e vendas, liberando seu tempo e impulsionando seus resultados.
+                Se a sua empresa busca eficiência operacional, inovação disruptiva e sistemas que 
+                pensam e agem por você, a Wolfx é o seu parceiro estratégico. Somos especialistas 
+                em desenvolver soluções digitais de alto desempenho que integram nativamente 
+                Inteligência Artificial (IA) e Automação de Processos (RPA), transformando 
+                desafios complexos em vantagens competitivas.
+              </p>
+              <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl">
+                Desenvolvemos Marketplaces, SaaS e plataformas personalizadas que não apenas 
+                atendem às suas necessidades atuais, mas que estão prontas para o futuro.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Button size="lg" className="glow-button text-primary-foreground hover:text-primary-foreground">
-                  Agende uma Consultoria Gratuita
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-                <Button size="lg" variant="outline" className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20">
-                  Descubra Nossas Soluções
-                </Button>
+                <a 
+                  href={`${whatsappLink}?text=${encodeURIComponent(whatsappMessage)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button size="lg" className="glow-button text-primary-foreground hover:text-primary-foreground">
+                    Iniciar a Transformação Digital
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </a>
               </div>
             </div>
             <div className="flex justify-center">
               <img 
                 src={heroImage} 
-                alt="WolfX AI WhatsApp Automation" 
+                alt="Wolfx - Inteligência Artificial e Automação" 
                 className="w-full max-w-lg rounded-2xl shadow-elegant"
               />
             </div>
@@ -117,275 +143,125 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Problems Section */}
+      {/* Specialties Section */}
       <section className="py-20 bg-secondary/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              Problemas que <span className="gradient-text">Resolvemos</span>
+              Nossas <span className="gradient-text">Especialidades</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Empresas e profissionais liberais enfrentam desafios diários que impactam 
-              diretamente na produtividade e resultados.
+              Desenvolvemos soluções digitais que integram nativamente IA e Automação de Processos
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {problems.map((problem, index) => (
-              <Card key={index} className="card-hover">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-destructive rounded-full"></div>
-                    <p className="font-medium">{problem}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Solution Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              Nossa <span className="gradient-text">Solução WolfX</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Agentes de IA especializados e personalizados para cada necessidade do seu negócio, 
-              com expertise comprovada e resultados mensuráveis.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="card-hover text-center">
-              <CardContent className="p-8">
-                <Bot className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-3">IA Personalizada</h3>
-                <p className="text-muted-foreground">
-                  Cada agente é desenvolvido especificamente para seu negócio e setor
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="card-hover text-center">
-              <CardContent className="p-8">
-                <Clock className="w-12 h-12 text-accent mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-3">24/7 Disponível</h3>
-                <p className="text-muted-foreground">
-                  Atendimento, agendamento e vendas funcionando continuamente
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="card-hover text-center">
-              <CardContent className="p-8">
-                <Target className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-3">Resultados Comprovados</h3>
-                <p className="text-muted-foreground">
-                  Métricas claras de ROI e melhoria de performance
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Clients Section */}
-      <section className="py-20 bg-secondary/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              Para Quem é a <span className="gradient-text">WolfX</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Atendemos empresas e profissionais liberais que buscam otimização e crescimento
-            </p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-            {clients.map((client, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {specialties.map((specialty, index) => (
               <Card key={index} className="card-hover text-center">
-                <CardContent className="p-6">
-                  <div className="text-4xl mb-3">{client.icon}</div>
-                  <p className="font-semibold">{client.type}</p>
+                <CardContent className="p-8">
+                  <specialty.icon className="w-12 h-12 text-primary mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-3">{specialty.title}</h3>
+                  <p className="text-muted-foreground">
+                    {specialty.description}
+                  </p>
                 </CardContent>
               </Card>
             ))}
           </div>
-          <div className="text-center mt-12">
-            <Button className="accent-button">
-              Veja Nossas Soluções por Setor
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </div>
         </div>
       </section>
 
-      {/* Process Section */}
+      {/* Identity Section */}
       <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              Como <span className="gradient-text">Funciona</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Nosso processo comprovado em 4 etapas para implementar seu Agente de IA
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {process.map((item, index) => (
-              <div key={index} className="text-center">
-                <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center text-primary-foreground text-2xl font-bold mx-auto mb-4">
-                  {item.step}
-                </div>
-                <h3 className="text-xl font-semibold mb-3">{item.title}</h3>
-                <p className="text-muted-foreground">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section className="py-20 bg-secondary/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              Nossos <span className="gradient-text">Produtos/Serviços</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Soluções especializadas para cada necessidade do seu negócio
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {services.map((service) => (
-              <Card key={service.id} className="card-hover">
-                <CardHeader>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center">
-                      <service.icon className="w-6 h-6 text-primary-foreground" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl">{service.title}</CardTitle>
-                      <CardDescription className="text-base">
-                        {service.description}
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {service.benefits.map((benefit, index) => (
-                      <Badge key={index} variant="outline" className="bg-primary/5">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        {benefit}
-                      </Badge>
-                    ))}
-                  </div>
-                  <Link to={service.path}>
-                    <Button className="w-full accent-button">
-                      Saiba Mais
-                      <ArrowRight className="ml-2 w-4 h-4" />
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section id="sobre" className="py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl lg:text-4xl font-bold mb-8">
-              Sobre a <span className="gradient-text">WolfX</span>
+              Nossa Identidade: <span className="gradient-text">Engenharia de Precisão e Inovação</span>
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
-              Somos especialistas em Inteligência Artificial aplicada a negócios, com foco 
-              em automação de processos via WhatsApp. Nossa missão é liberar o potencial 
-              de empresas e profissionais através da tecnologia mais avançada do mercado.
+              A Wolfx é composta por uma equipe de engenheiros de software, cientistas de dados e 
+              arquitetos de soluções dedicados a construir a próxima geração de sistemas. Nossa 
+              expertise reside em aplicar o poder da IA para transformar operações e criar vantagens competitivas.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <Shield className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Segurança</h3>
-                <p className="text-muted-foreground">
-                  Dados protegidos com os mais altos padrões de segurança
-                </p>
-              </div>
-              <div className="text-center">
-                <Zap className="w-12 h-12 text-accent mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Performance</h3>
-                <p className="text-muted-foreground">
-                  Otimização contínua para máxima eficiência
-                </p>
-              </div>
-              <div className="text-center">
-                <MessageCircle className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Suporte</h3>
-                <p className="text-muted-foreground">
-                  Acompanhamento dedicado em todas as etapas
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section id="faq" className="py-20 bg-secondary/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              Perguntas <span className="gradient-text">Frequentes</span>
-            </h2>
-          </div>
-          <div className="max-w-3xl mx-auto">
-            <div className="space-y-6">
-              {[
-                {
-                  q: "Como funciona a integração com meu sistema atual?",
-                  a: "Nossos agentes se integram facilmente com as principais ferramentas de gestão do mercado através de APIs seguras."
-                },
-                {
-                  q: "Quanto tempo leva para implementar um agente?",
-                  a: "O processo completo leva entre 2-4 semanas, dependendo da complexidade e personalização necessária."
-                },
-                {
-                  q: "Os dados dos meus clientes ficam seguros?",
-                  a: "Sim, utilizamos criptografia de ponta e seguimos todas as normas da LGPD para proteção de dados."
-                },
-                {
-                  q: "Posso personalizar as respostas do agente?",
-                  a: "Absolutamente! Cada agente é totalmente personalizado com a linguagem e tom da sua marca."
-                }
-              ].map((faq, index) => (
-                <Card key={index} className="card-hover">
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold text-lg mb-3">{faq.q}</h3>
-                    <p className="text-muted-foreground">{faq.a}</p>
-                  </CardContent>
-                </Card>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+              {aiCapabilities.map((capability, index) => (
+                <div key={index} className="text-center">
+                  <capability.icon className="w-12 h-12 text-primary mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">{capability.title}</h3>
+                  <p className="text-muted-foreground">
+                    {capability.description}
+                  </p>
+                </div>
               ))}
             </div>
           </div>
         </div>
       </section>
 
+      {/* Process Section */}
+      <section className="py-20 bg-secondary/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
+              Nosso Processo de Desenvolvimento: <span className="gradient-text">A Estrutura NEXUS</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
+              Na Wolfx, cada projeto é guiado pela metodologia NEXUS, um framework que garante a entrega 
+              de sistemas inteligentes, escaláveis e perfeitamente alinhados aos seus objetivos de negócio.
+            </p>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              O processo <strong>NEXUS</strong> (Necessidade, Execução, X-Factor, Upgrade, Suporte) assegura 
+              que a sua solução digital seja construída com a máxima precisão e o mais alto nível de inteligência embarcada.
+            </p>
+          </div>
+          <div className="space-y-8 max-w-5xl mx-auto">
+            {nexusPhases.map((phase, index) => (
+              <Card key={index} className="card-hover">
+                <CardHeader>
+                  <div className="flex items-start space-x-6">
+                    <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center text-primary-foreground text-3xl font-bold flex-shrink-0">
+                      {phase.letter}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <phase.icon className={`w-6 h-6 ${phase.color}`} />
+                        <CardTitle className="text-2xl">{phase.title}</CardTitle>
+                      </div>
+                      <CardDescription className="text-base mt-4">
+                        {phase.description}
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-primary">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-primary-foreground mb-6">
-            Pronto para Automatizar seu Negócio?
+            Pronto para Transformar Sua Operação com Inteligência?
           </h2>
           <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
-            Agende uma consultoria gratuita e descubra como a WolfX pode transformar 
-            seus resultados com Inteligência Artificial.
+            Não se contente com sistemas comuns. Se você está pronto para automatizar o que é 
+            repetitivo e potencializar o que é estratégico com o poder da Inteligência Artificial, 
+            a Wolfx é a sua escolha.
           </p>
-          <Button size="lg" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
-            Agende sua Consultoria Gratuita
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
+          <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
+            Fale com um de nossos arquitetos de soluções e comece a construir seu sistema inteligente hoje mesmo.
+          </p>
+          <a 
+            href={`${whatsappLink}?text=${encodeURIComponent(whatsappMessage)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button size="lg" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+              Iniciar a Transformação Digital
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+          </a>
         </div>
       </section>
     </div>

@@ -1,22 +1,18 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Bot, LogOut, Settings, FileText, User } from "lucide-react";
+import { Menu, X, Bot, LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { user, signOut, isAdmin } = useAuth();
+  const { user, signOut, userProfile, canManageUsers } = useAuth();
+  const isAdmin = userProfile?.role === 'admin';
 
   const navItems = [
     { name: "Início", path: "/" },
-    { name: "AAI - Agendamento", path: "/aai" },
-    { name: "AAQ - Qualificação", path: "/aaq" },
-    { name: "ASF - Suporte", path: "/asf" },
-    { name: "AVF - Vendas", path: "/avf" },
-    { name: "Blog", path: "/blog" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -48,9 +44,9 @@ const Navigation = () => {
             ))}
           </div>
 
-          {/* User Actions */}
-          <div className="hidden lg:flex items-center space-x-4">
-            {user ? (
+          {/* User Actions - Apenas para usuários logados */}
+          {user && (
+            <div className="hidden lg:flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 {isAdmin && (
                   <Link to="/admin">
@@ -61,7 +57,7 @@ const Navigation = () => {
                   </Link>
                 )}
                 <Badge variant="secondary" className="flex items-center space-x-1">
-                  <User className="h-3 w-3" />
+                  <Bot className="h-3 w-3" />
                   <span>{user.email}</span>
                 </Badge>
                 <Button 
@@ -72,21 +68,8 @@ const Navigation = () => {
                   <LogOut className="h-4 w-4" />
                 </Button>
               </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <Link to="/login">
-                  <Button variant="ghost" size="sm">
-                    Entrar
-                  </Button>
-                </Link>
-                <Link to="/register">
-                  <Button size="sm">
-                    Cadastrar
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Mobile Menu Button */}
           <button
@@ -118,10 +101,10 @@ const Navigation = () => {
                 </Link>
               ))}
               
-              {user ? (
+              {user && (
                 <div className="flex flex-col space-y-2 pt-4 border-t border-border">
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <User className="h-4 w-4" />
+                    <Bot className="h-4 w-4" />
                     <span>{user.email}</span>
                     {isAdmin && <Badge variant="secondary">Admin</Badge>}
                   </div>
@@ -145,19 +128,6 @@ const Navigation = () => {
                     <LogOut className="h-4 w-4 mr-2" />
                     Sair
                   </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col space-y-2 pt-4 border-t border-border">
-                  <Link to="/login" onClick={() => setIsOpen(false)}>
-                    <Button variant="ghost" size="sm" className="w-full">
-                      Entrar
-                    </Button>
-                  </Link>
-                  <Link to="/register" onClick={() => setIsOpen(false)}>
-                    <Button size="sm" className="w-full">
-                      Cadastrar
-                    </Button>
-                  </Link>
                 </div>
               )}
             </div>

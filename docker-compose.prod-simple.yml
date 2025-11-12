@@ -7,17 +7,30 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
+        delay: 5s
+        max_attempts: 3
       labels:
+        # Traefik labels para proxy reverso e SSL (Swarm mode)
         - "traefik.enable=true"
-        - "traefik.http.routers.wolfx.rule=Host(`wolfx.com.br`)"
-        - "traefik.http.routers.wolfx.entrypoints=websecure"
-        - "traefik.http.routers.wolfx.tls.certresolver=letsencrypt"
-        - "traefik.http.services.wolfx.loadbalancer.server.port=80"
         - "traefik.docker.network=server"
+        - "traefik.http.routers.wolfx-ai-connect.rule=Host(`wolfx.com.br`) || Host(`www.wolfx.com.br`)"
+        - "traefik.http.routers.wolfx-ai-connect.entrypoints=websecure"
+        - "traefik.http.routers.wolfx-ai-connect.tls=true"
+        - "traefik.http.routers.wolfx-ai-connect.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.wolfx-ai-connect.service=wolfx-ai-connect"
+        - "traefik.http.services.wolfx-ai-connect.loadbalancer.server.port=80"
+        - "traefik.http.services.wolfx-ai-connect.loadbalancer.passHostHeader=true"
+        # Redirect HTTP to HTTPS
+        - "traefik.http.routers.wolfx-ai-connect-http.rule=Host(`wolfx.com.br`) || Host(`www.wolfx.com.br`)"
+        - "traefik.http.routers.wolfx-ai-connect-http.entrypoints=web"
+        - "traefik.http.routers.wolfx-ai-connect-http.middlewares=redirect-to-https"
+        - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
     environment:
       - NODE_ENV=production
       - VITE_SUPABASE_URL=https://supabase.wolfx.com.br
       - VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.Mr2Z9_cUmM-LjhY5SvArT_78TPPiUh_hGITfq94KGbs
+      - DOMAIN=wolfx.com.br
+      - ALLOWED_HOSTS=wolfx.com.br,www.wolfx.com.br
     volumes:
       - nginx_cache:/var/cache/nginx
     networks:

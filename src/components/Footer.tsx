@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Bot, Mail, Phone, MapPin, Settings, Shield, User } from "lucide-react";
+import { Bot, Mail, Phone, Settings, Shield, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,9 +34,9 @@ const Footer = () => {
               <span className="text-2xl font-bold">WolfX</span>
             </div>
             <p className="text-primary-foreground/80 mb-4 max-w-md">
-              Especialistas em Agentes de IA para WhatsApp. Automatizamos seus processos 
-              de atendimento, agendamento e vendas, liberando seu tempo para focar no 
-              crescimento do seu negócio.
+              Especialistas em Inteligência Artificial e Automação de Processos. Desenvolvemos 
+              soluções digitais de alto desempenho que integram nativamente IA e RPA, transformando 
+              desafios complexos em vantagens competitivas para sua operação.
             </p>
             
             {/* Status do usuário e botão admin */}
@@ -69,11 +69,11 @@ const Footer = () => {
             <div className="flex space-x-4">
               <div className="flex items-center space-x-2 text-sm">
                 <Mail className="w-4 h-4" />
-                <span>contato@wolfx.com.br</span>
+                <span>wolfxpj@gmail.com</span>
               </div>
               <div className="flex items-center space-x-2 text-sm">
                 <Phone className="w-4 h-4" />
-                <span>(11) 99999-9999</span>
+                <span>48 988114708</span>
               </div>
             </div>
           </div>
@@ -83,24 +83,16 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4">Nossos Serviços</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/aai" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  AAI - Agendamento Inteligente
-                </Link>
+                <span className="text-primary-foreground/80">Marketplaces</span>
               </li>
               <li>
-                <Link to="/aaq" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  AAQ - Atendimento e Qualificação
-                </Link>
+                <span className="text-primary-foreground/80">SaaS</span>
               </li>
               <li>
-                <Link to="/asf" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  ASF - Suporte e FAQ
-                </Link>
+                <span className="text-primary-foreground/80">Plataformas Personalizadas</span>
               </li>
               <li>
-                <Link to="/avf" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  AVF - Vendas e Fechamento
-                </Link>
+                <span className="text-primary-foreground/80">IA e Automação</span>
               </li>
             </ul>
           </div>
@@ -113,26 +105,6 @@ const Footer = () => {
                 <Link to="/" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
                   Início
                 </Link>
-              </li>
-              <li>
-                <Link to="/blog" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <a href="#sobre" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  Sobre Nós
-                </a>
-              </li>
-              <li>
-                <a href="#faq" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  FAQ
-                </a>
-              </li>
-              <li>
-                <a href="#contato" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  Contato
-                </a>
               </li>
             </ul>
           </div>

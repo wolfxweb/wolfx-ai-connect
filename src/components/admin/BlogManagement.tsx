@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Edit, Trash2, Plus, Eye, Loader2, Calendar, User, Search, Filter, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
+import { Edit, Trash2, Plus, Eye, Loader2, Calendar, Search, Filter, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function BlogManagement() {
@@ -341,7 +341,6 @@ export default function BlogManagement() {
                   <TableHead>Título</TableHead>
                   <TableHead>Categoria</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Autor</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -381,12 +380,6 @@ export default function BlogManagement() {
                     </TableCell>
                     <TableCell>
                       {getStatusBadge(post.status)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <User className="h-4 w-4" />
-                        <span>{post.profiles?.name || 'Autor'}</span>
-                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">

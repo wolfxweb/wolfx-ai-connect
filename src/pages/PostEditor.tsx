@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, Save, Eye, Calendar, Loader2, Bold, Italic, Underline, List, ListOrdered, Quote, Link, Type } from 'lucide-react'
 import { toast } from 'sonner'
+import ImageUpload from '@/components/ImageUpload'
 
 // Componente de Toolbar para formatação de texto
 const TextEditorToolbar = ({ onFormat, selectedText }: { onFormat: (format: string) => void, selectedText: string }) => {
@@ -477,12 +478,13 @@ export default function PostEditor() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="featured_image">URL da Imagem Destaque</Label>
-                    <Input
-                      id="featured_image"
+                    <ImageUpload
                       value={formData.featured_image}
-                      onChange={(e) => setFormData({ ...formData, featured_image: e.target.value })}
-                      placeholder="https://exemplo.com/imagem.jpg"
+                      onChange={(value) => setFormData({ ...formData, featured_image: value })}
+                      label="Imagem de Destaque"
+                      maxWidth={1920}
+                      maxHeight={1080}
+                      quality={0.85}
                     />
                   </div>
                   

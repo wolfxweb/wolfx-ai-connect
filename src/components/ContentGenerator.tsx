@@ -49,6 +49,7 @@ export default function ContentGenerator({
   const [aiProvider, setAiProvider] = useState<'chatgpt' | 'perplexity'>('chatgpt')
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true) // Salvar automaticamente por padrão
   const [generateImage, setGenerateImage] = useState(false) // Gerar imagem separadamente (desabilitado por padrão)
+  const [generatedContentWithImage, setGeneratedContentWithImage] = useState<(GeneratedContent & { featured_image?: string }) | null>(null) // Conteúdo gerado para salvar manualmente
 
   useEffect(() => {
     // Verificar qual provider está configurado
@@ -178,6 +179,13 @@ export default function ContentGenerator({
         featured_image: imageDataUrl || undefined // Adicionar imagem apenas se foi gerada
       }
       
+      // Armazenar conteúdo gerado para salvar manualmente se auto-save estiver desabilitado
+      if (!autoSaveEnabled) {
+        setGeneratedContentWithImage(contentWithImage)
+      } else {
+        setGeneratedContentWithImage(null) // Limpar se auto-save estiver habilitado
+      }
+      
       // Chamar callback com conteúdo e imagem
       onContentGenerated(contentWithImage)
       
@@ -218,6 +226,9 @@ export default function ContentGenerator({
           if (onAutoSave) {
             onAutoSave(result.postId)
           }
+          
+          // Limpar conteúdo gerado após salvar
+          setGeneratedContentWithImage(null)
         } catch (saveError: any) {
           console.error('❌ Erro ao salvar post:', saveError)
           toast.error(`Erro ao salvar post: ${saveError.message}`)
@@ -232,6 +243,55 @@ export default function ContentGenerator({
     } finally {
       setGenerating(false)
       setGeneratingImage(false)
+      setSavingPost(false)
+    }
+  }
+
+  const handleSavePost = async () => {
+    if (!generatedContentWithImage) {
+      toast.error('Nenhum conteúdo gerado para salvar')
+      return
+    }
+
+    if (!user?.id) {
+      toast.error('Você precisa estar logado para salvar posts')
+      return
+    }
+
+    if (!categoryId) {
+      toast.error('Por favor, selecione uma categoria')
+      return
+    }
+
+    setSavingPost(true)
+    
+    try {
+      const category = categories.find(c => c.id === categoryId)
+      const result = await autoSavePostAsDraft(
+        generatedContentWithImage,
+        user.id,
+        categoryId,
+        category?.name,
+        false // Não gerar imagem aqui, já foi gerada (ou não foi solicitada)
+      )
+      
+      if (generatedContentWithImage.featured_image) {
+        toast.success(`Post salvo como rascunho com imagem gerada! ID: ${result.postId}`)
+      } else {
+        toast.success(`Post salvo como rascunho! ID: ${result.postId}`)
+      }
+      
+      // Chamar callback se fornecido
+      if (onAutoSave) {
+        onAutoSave(result.postId)
+      }
+      
+      // Limpar conteúdo gerado após salvar
+      setGeneratedContentWithImage(null)
+    } catch (saveError: any) {
+      console.error('❌ Erro ao salvar post:', saveError)
+      toast.error(`Erro ao salvar post: ${saveError.message}`)
+    } finally {
       setSavingPost(false)
     }
   }
@@ -610,6 +670,37 @@ export default function ContentGenerator({
             )}
           </Button>
         </div>
+
+        {/* Botão para salvar post manualmente quando auto-save estiver desabilitado */}
+        {!autoSaveEnabled && generatedContentWithImage && user?.id && categoryId && (
+          <div className="pt-4 border-t">
+            <Button
+              type="button"
+              onClick={handleSavePost}
+              disabled={savingPost}
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+            >
+              {savingPost ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando post...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  {generatedContentWithImage.featured_image 
+                    ? 'Salvar Post com Imagem' 
+                    : 'Salvar Post como Rascunho'}
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              {generatedContentWithImage.featured_image 
+                ? 'Post gerado com imagem. Clique para salvar como rascunho.' 
+                : 'Post gerado. Clique para salvar como rascunho.'}
+            </p>
+          </div>
+        )}
 
         {configured && (
           <Alert>

@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 
 // Configuração para Supabase externo (WolfX)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://supabase.wolfx.com.br'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.Mr2Z9_cUmM-LjhY5SvArT_78TPPiUh_hGITfq94KGbs'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.lwJ6DOlWntSiaCw8_I_m3YHKSn8wKlL_wjwWod67jQY'
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

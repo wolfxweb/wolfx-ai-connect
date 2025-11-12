@@ -111,6 +111,26 @@ const Footer = () => {
                   Sobre
                 </Link>
               </li>
+              {!user && (
+                <>
+                  <li>
+                    <Link 
+                      to="/login" 
+                      className="text-primary-foreground/60 hover:text-primary-foreground/80 transition-colors text-sm"
+                    >
+                      Login
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      to="/register" 
+                      className="text-primary-foreground/60 hover:text-primary-foreground/80 transition-colors text-sm"
+                    >
+                      Registro
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
         </div>
@@ -119,7 +139,25 @@ const Footer = () => {
           <p className="text-primary-foreground/60 text-sm">
             © {currentYear} WolfX. Todos os direitos reservados.
           </p>
-          <div className="flex space-x-6 mt-4 md:mt-0">
+          <div className="flex flex-wrap items-center gap-4 mt-4 md:mt-0">
+            {!user && (
+              <>
+                <Link 
+                  to="/login" 
+                  className="text-primary-foreground/40 hover:text-primary-foreground/70 text-xs transition-colors"
+                >
+                  Login
+                </Link>
+                <span className="text-primary-foreground/30 text-xs">•</span>
+                <Link 
+                  to="/register" 
+                  className="text-primary-foreground/40 hover:text-primary-foreground/70 text-xs transition-colors"
+                >
+                  Registro
+                </Link>
+                <span className="text-primary-foreground/30 text-xs">•</span>
+              </>
+            )}
             <a href="#" className="text-primary-foreground/60 hover:text-primary-foreground text-sm transition-colors">
               Política de Privacidade
             </a>

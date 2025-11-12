@@ -689,6 +689,18 @@ class SupabaseLikeQuery {
       const ids = data.map((item: any) => item.id)
       console.log(`🗑️ [${this.tableName}] Excluindo ${ids.length} registro(s):`, ids)
 
+      // Para posts, verificar se há imagens para limpar
+      if (this.tableName === 'blog_posts') {
+        for (const post of data) {
+          if (post.featured_image && post.featured_image.startsWith('data:')) {
+            // A imagem está armazenada como base64 no próprio post
+            // Quando o post é deletado, a imagem também é removida automaticamente
+            const imageSize = Math.round((post.featured_image.length * 3) / 4)
+            console.log(`📸 [${this.tableName}] Post tem imagem de ${Math.round(imageSize / 1024)}KB que será removida com o post`)
+          }
+        }
+      }
+
       if (ids.length === 1) {
         await table.delete(ids[0])
         console.log(`✅ [${this.tableName}] Registro excluído: ${ids[0]}`)

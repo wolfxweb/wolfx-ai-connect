@@ -20,7 +20,7 @@ export async function optimizeImage(
   const {
     maxWidth = 1920,
     maxHeight = 1080,
-    quality = 0.85,
+    quality = 0.80, // Reduzido para melhor compressão
     format = 'jpeg'
   } = options
 

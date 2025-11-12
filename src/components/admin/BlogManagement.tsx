@@ -37,6 +37,13 @@ export default function BlogManagement() {
   const fetchPosts = async () => {
     try {
       setLoading(true)
+      console.log('🔍 Buscando posts...', {
+        searchTerm,
+        statusFilter,
+        categoryFilter,
+        currentPage,
+        postsPerPage
+      })
       
       // Construir query com filtros
       let query = supabase
@@ -64,7 +71,16 @@ export default function BlogManagement() {
 
       const { data: postsData, error: postsError, count } = await query
 
-      if (postsError) throw postsError
+      if (postsError) {
+        console.error('❌ Erro ao buscar posts:', postsError)
+        throw postsError
+      }
+
+      console.log(`✅ Posts encontrados: ${postsData?.length || 0}`, {
+        total: count,
+        page: currentPage,
+        totalPages: Math.ceil((count || 0) / postsPerPage)
+      })
 
       // Buscar categorias separadamente
       const { data: categoriesData, error: categoriesError } = await supabase
@@ -72,7 +88,7 @@ export default function BlogManagement() {
         .select('id, name')
 
       if (categoriesError) {
-        console.warn('Erro ao buscar categorias:', categoriesError)
+        console.warn('⚠️ Erro ao buscar categorias:', categoriesError)
       }
 
       // Buscar profiles separadamente
@@ -81,7 +97,7 @@ export default function BlogManagement() {
         .select('id, name, email')
 
       if (profilesError) {
-        console.warn('Erro ao buscar profiles:', profilesError)
+        console.warn('⚠️ Erro ao buscar profiles:', profilesError)
       }
 
       // Combinar dados manualmente
@@ -91,12 +107,17 @@ export default function BlogManagement() {
         profiles: profilesData?.find(prof => prof.id === post.author_id) || null
       })) || []
 
+      console.log(`📋 Posts processados: ${postsWithRelations.length}`)
+      
       setPosts(postsWithRelations)
       setTotalPosts(count || 0)
       setTotalPages(Math.ceil((count || 0) / postsPerPage))
     } catch (error) {
-      console.error('Error fetching posts:', error)
+      console.error('❌ Error fetching posts:', error)
       toast.error('Erro ao carregar posts')
+      setPosts([])
+      setTotalPosts(0)
+      setTotalPages(0)
     } finally {
       setLoading(false)
     }

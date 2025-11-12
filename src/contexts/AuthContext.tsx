@@ -1,19 +1,20 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { User, Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { auth, Session } from '@/lib/auth'
+import { db, User as UserType } from '@/lib/database'
 
 interface UserProfile {
   id: string
   name: string
+  email: string
   role: 'user' | 'admin' | 'moderator'
   status: 'active' | 'inactive' | 'suspended' | 'pending'
 }
 
 interface AuthContextType {
-  user: User | null
+  user: UserType | null
   session: Session | null
   loading: boolean
-  signUp: (email: string, password: string, name?: string) => Promise<{ error: any }>
+  signUp: (email: string, password: string, name?: string) => Promise<{ error: any; message?: string }>
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<{ error: any }>
   userProfile: UserProfile | null
@@ -38,7 +39,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<UserType | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
@@ -47,26 +48,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
       console.log('🔍 Fetching user profile for ID:', userId)
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
+      const userData = await db.profiles.get(userId)
 
-      if (error) {
-        console.error('❌ Error fetching user profile:', error)
-        console.error('❌ Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        })
+      if (!userData) {
+        console.error('❌ User profile not found')
         return null
       }
 
-      console.log('✅ User profile loaded:', data)
-      setUserProfile(data)
-      return data
+      const profile: UserProfile = {
+        id: userData.id,
+        name: userData.name || '',
+        email: userData.email,
+        role: userData.role,
+        status: userData.status
+      }
+
+      console.log('✅ User profile loaded:', profile)
+      setUserProfile(profile)
+      return profile
     } catch (error) {
       console.error('❌ Error fetching user profile:', error)
       return null
@@ -75,112 +74,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Obter sessão inicial
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      
-      if (session?.user) {
-        await fetchUserProfile(session.user.id)
-      }
-      
-      setLoading(false)
-    })
-
-    // Escutar mudanças de autenticação
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth state changed:', { event, hasUser: !!session?.user })
-      
-      setSession(session)
-      setUser(session?.user ?? null)
-      
-      // Só buscar perfil se não for um evento de SIGNED_IN (para evitar condição de corrida)
-      if (session?.user && event !== 'SIGNED_IN') {
-        await fetchUserProfile(session.user.id)
-      } else if (!session?.user) {
-        setUserProfile(null)
-      }
-      
-      setLoading(false)
-
-      // Se for um novo usuário, criar perfil
-      if (event === 'SIGNED_UP' && session?.user) {
-        await createUserProfile(session.user)
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const createUserProfile = async (user: User) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: user.id,
-            name: user.user_metadata?.name || '',
-            role: 'user',
-            status: 'active',
-          },
-        ])
-
-      if (error) {
-        console.error('Error creating user profile:', error)
-      } else {
-        console.log('User profile created successfully')
-      }
-    } catch (error) {
-      console.error('Error creating user profile:', error)
+    const currentSession = auth.getSession()
+    
+    if (currentSession) {
+      setSession(currentSession)
+      setUser(currentSession.user)
+      fetchUserProfile(currentSession.user.id)
     }
-  }
+    
+    setLoading(false)
+  }, [])
 
   const signUp = async (email: string, password: string, name?: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name || '',
-          },
-        },
-      })
+      const result = await auth.signUp(email, password, name)
       
-      if (error) {
-        // Tratar erros específicos
-        if (error.message.includes('Email signups are disabled') || 
-            error.message.includes('signup is disabled') ||
-            error.message.includes('Signup is disabled')) {
-          return { 
-            error: { 
-              message: 'Registro temporariamente indisponível. Execute o script fix-email-signup.sql no Supabase ou tente novamente em alguns minutos.' 
-            } 
-          }
-        }
-        if (error.message.includes('User already registered')) {
-          return { 
-            error: { 
-              message: 'Este email já está cadastrado. Tente fazer login ou use outro email.' 
-            } 
-          }
-        }
-        if (error.message.includes('Password should be at least')) {
-          return { 
-            error: { 
-              message: 'A senha deve ter pelo menos 8 caracteres e conter letras maiúsculas, minúsculas e números.' 
-            } 
-          }
-        }
+      if (result.error) {
+        return result
       }
-      
-      return { error }
-    } catch (err: any) {
+
+      // NÃO fazer login automaticamente após registro
+      // Usuários inativos precisam ser ativados por um admin antes de poderem fazer login
+      // Retornar mensagem informando que a conta foi criada mas precisa ser ativada
       return { 
-        error: { 
-          message: 'Erro inesperado ao criar conta. Tente novamente.' 
-        } 
+        error: null,
+        message: 'Conta criada com sucesso! Sua conta precisa ser ativada por um administrador antes de você poder fazer login.'
+      }
+    } catch (err: any) {
+      return {
+        error: {
+          message: 'Erro inesperado ao criar conta. Tente novamente.'
+        }
       }
     }
   }
@@ -188,73 +112,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signIn = async (email: string, password: string) => {
     try {
       console.log('🚀 Starting signIn process...', { email })
-      console.log('🔧 Supabase config:', { 
-        url: supabase.supabaseUrl, 
-        hasAnonKey: !!supabase.supabaseKey 
-      })
       
-      console.log('📞 Calling supabase.auth.signInWithPassword...')
+      const result = await auth.signIn(email, password)
       
-      // Adicionar timeout para evitar travamento
-      const authResponse = await Promise.race([
-        supabase.auth.signInWithPassword({
-          email,
-          password,
-        }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Login timeout')), 10000)
-        )
-      ])
+      if (result.error) {
+        console.error('❌ Login error:', result.error)
+        return result
+      }
+
+      console.log('✅ Login successful')
       
-      console.log('📡 Supabase auth response received:', { 
-        hasData: !!authResponse.data, 
-        hasError: !!authResponse.error,
-        data: authResponse.data,
-        error: authResponse.error 
-      })
-      
-      const { data, error } = authResponse
-      
-      if (error) {
-        console.error('❌ Login error:', error)
-        return { error }
+      if (result.data) {
+        setSession(result.data)
+        setUser(result.data.user)
+        await fetchUserProfile(result.data.user.id)
       }
       
-      console.log('✅ Login successful, checking user data...')
-      
-      // Se login foi bem-sucedido, buscar o perfil do usuário
-      if (data && data.user) {
-        console.log('👤 User found, fetching profile...', { userId: data.user.id })
-        // Aguardar um pouco para o onAuthStateChange processar
-        await new Promise(resolve => setTimeout(resolve, 100))
-        const profile = await fetchUserProfile(data.user.id)
-        console.log('📋 Profile fetch result:', profile)
-      } else {
-        console.warn('⚠️ Login successful but no user data received', { data })
-      }
-      
-      console.log('🏁 SignIn process completed')
-      return { error }
+      return result
     } catch (err: any) {
       console.error('💥 Login exception:', err)
-      return { 
-        error: { 
-          message: 'Erro inesperado ao fazer login. Tente novamente.' 
-        } 
+      return {
+        error: {
+          message: 'Erro inesperado ao fazer login. Tente novamente.'
+        }
       }
     }
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    return { error }
+    try {
+      const result = await auth.signOut()
+      setSession(null)
+      setUser(null)
+      setUserProfile(null)
+      return result
+    } catch (error: any) {
+      return { error }
+    }
   }
 
   // Permissões baseadas no role e status
   const isLoggedIn = !!user && userProfile?.status === 'active'
   
-  // Todos os usuários logados podem acessar o admin
-  const canAccessAdmin = isLoggedIn
+  // Apenas admins ativos podem acessar o painel admin
+  const canAccessAdmin = isLoggedIn && userProfile?.role === 'admin'
   
   // Apenas admins podem gerenciar usuários
   const canManageUsers = isLoggedIn && userProfile?.role === 'admin'

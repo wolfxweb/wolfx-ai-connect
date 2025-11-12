@@ -10,7 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Edit, Trash2, Plus, Loader2 } from 'lucide-react'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { Edit, Trash2, Plus, Loader2, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function CategoryManagement() {
@@ -24,6 +25,9 @@ export default function CategoryManagement() {
     description: ''
   })
   const [submitting, setSubmitting] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const { user } = useAuth()
 
   useEffect(() => {
@@ -32,16 +36,30 @@ export default function CategoryManagement() {
 
   const fetchCategories = async () => {
     try {
+      setLoading(true)
+      console.log('🔍 Buscando categorias...')
+      
+      // Limpar filtros anteriores criando uma nova query
       const { data, error } = await supabase
         .from('categories')
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Erro ao buscar categorias:', error)
+        throw error
+      }
+      
+      console.log(`✅ Categorias encontradas: ${data?.length || 0}`, data)
       setCategories(data || [])
+      
+      if (data && data.length > 0) {
+        console.log('📋 Primeira categoria:', data[0])
+      }
     } catch (error) {
-      console.error('Error fetching categories:', error)
+      console.error('❌ Error fetching categories:', error)
       toast.error('Erro ao carregar categorias')
+      setCategories([])
     } finally {
       setLoading(false)
     }
@@ -81,25 +99,44 @@ export default function CategoryManagement() {
         toast.success('Categoria atualizada com sucesso!')
       } else {
         // Criar nova categoria
-        const { error } = await supabase
+        console.log('💾 Criando categoria:', { name: formData.name, slug, user: user?.id })
+        
+        const { data, error } = await supabase
           .from('categories')
           .insert([
             {
               name: formData.name,
               slug,
-              description: formData.description,
-              created_by: user?.id
+              description: formData.description || '',
+              created_by: user?.id || 'system'
             }
           ])
 
-        if (error) throw error
+        if (error) {
+          console.error('❌ Erro ao criar categoria:', error)
+          throw error
+        }
+        
+        console.log('✅ Categoria criada, resposta:', data)
+        
+        if (!data) {
+          console.error('❌ Categoria criada mas data não retornada')
+          // Mesmo sem data, continuar e buscar novamente
+        }
+        
         toast.success('Categoria criada com sucesso!')
       }
 
       setIsDialogOpen(false)
       setEditingCategory(null)
       setFormData({ name: '', slug: '', description: '' })
-      fetchCategories()
+      
+      // Aguardar um pouco antes de buscar para garantir que o IndexedDB foi atualizado
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      // Buscar categorias novamente
+      console.log('🔄 Buscando categorias após inserção...')
+      await fetchCategories()
     } catch (error: any) {
       console.error('Error saving category:', error)
       toast.error(error.message || 'Erro ao salvar categoria')
@@ -118,21 +155,31 @@ export default function CategoryManagement() {
     setIsDialogOpen(true)
   }
 
-  const handleDelete = async (categoryId: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta categoria?')) return
+  const handleDeleteClick = (category: Category) => {
+    setCategoryToDelete(category)
+    setDeleteDialogOpen(true)
+  }
 
+  const handleDeleteConfirm = async () => {
+    if (!categoryToDelete) return
+
+    setDeleting(true)
     try {
       const { error } = await supabase
         .from('categories')
         .delete()
-        .eq('id', categoryId)
+        .eq('id', categoryToDelete.id)
 
       if (error) throw error
       toast.success('Categoria excluída com sucesso!')
-      fetchCategories()
+      setDeleteDialogOpen(false)
+      setCategoryToDelete(null)
+      await fetchCategories()
     } catch (error: any) {
       console.error('Error deleting category:', error)
       toast.error(error.message || 'Erro ao excluir categoria')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -287,8 +334,8 @@ export default function CategoryManagement() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDelete(category.id)}
-                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleDeleteClick(category)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -301,6 +348,44 @@ export default function CategoryManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de confirmação de exclusão */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <AlertDialogTitle>Excluir Categoria</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="pt-2">
+              Tem certeza que deseja excluir a categoria <strong>"{categoryToDelete?.name}"</strong>?
+              <br />
+              <span className="text-xs text-muted-foreground mt-2 block">
+                Esta ação não pode ser desfeita. Todos os posts associados a esta categoria podem ser afetados.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                'Excluir'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

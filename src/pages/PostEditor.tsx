@@ -284,7 +284,14 @@ export default function PostEditor() {
         toast.success('Post atualizado com sucesso!')
       } else {
         // Criar novo post
-        const { error } = await supabase
+        console.log('💾 Criando post:', { 
+          title: formData.title, 
+          slug, 
+          status: formData.status,
+          author_id: user?.id 
+        })
+        
+        const { data, error } = await supabase
           .from('blog_posts')
           .insert([
             {
@@ -306,8 +313,21 @@ export default function PostEditor() {
             }
           ])
 
-        if (error) throw error
+        if (error) {
+          console.error('❌ Erro ao criar post:', error)
+          throw error
+        }
+        
+        console.log('✅ Post criado, resposta:', data)
+        
+        if (!data) {
+          console.error('❌ Post criado mas data não retornada')
+        }
+        
         toast.success('Post criado com sucesso!')
+        
+        // Aguardar um pouco antes de navegar para garantir que o IndexedDB foi atualizado
+        await new Promise(resolve => setTimeout(resolve, 300))
       }
 
       navigate('/admin')

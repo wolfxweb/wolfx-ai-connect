@@ -56,18 +56,19 @@ export default function Register() {
       return
     }
 
-    const { error } = await signUp(email, password, name)
+    const result = await signUp(email, password, name)
     
-    if (error) {
-      setError(error.message)
+    if (result.error) {
+      setError(result.error.message)
+      setLoading(false)
     } else {
       setSuccess(true)
+      // Mostrar mensagem de sucesso e redirecionar após 3 segundos
       setTimeout(() => {
         navigate('/login')
-      }, 2000)
+      }, 3000)
+      setLoading(false)
     }
-    
-    setLoading(false)
   }
 
   if (success) {
@@ -78,7 +79,10 @@ export default function Register() {
             <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
             <h2 className="text-2xl font-bold text-green-700 mb-2">Conta criada com sucesso!</h2>
             <p className="text-green-600 mb-4">
-              Verifique seu email para confirmar a conta antes de fazer login.
+              Sua conta foi criada, mas precisa ser ativada por um administrador antes de você poder fazer login.
+            </p>
+            <p className="text-sm text-muted-foreground mb-2">
+              Entre em contato com o administrador para ativar sua conta.
             </p>
             <p className="text-sm text-muted-foreground">
               Redirecionando para a página de login...

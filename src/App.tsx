@@ -7,6 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import Navigation from "./components/Navigation";
 import Footer from "./components/Footer";
 import Index from "./pages/Index";
+import About from "./pages/About";
 import AAI from "./pages/AAI";
 import AAQ from "./pages/AAQ"; 
 import ASF from "./pages/ASF";
@@ -33,6 +34,7 @@ const App = () => (
             <main className="flex-1 pt-16">
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/sobre" element={<About />} />
                 <Route path="/aai" element={<AAI />} />
                 <Route path="/aaq" element={<AAQ />} />
                 <Route path="/asf" element={<ASF />} />

@@ -236,6 +236,14 @@ export default function PostEditor() {
 
       if (error) throw error
       
+      console.log('📄 Post carregado:', {
+        id: data.id,
+        title: data.title,
+        has_featured_image: !!data.featured_image,
+        featured_image_length: data.featured_image?.length || 0,
+        featured_image_preview: data.featured_image?.substring(0, 50) || 'sem imagem'
+      })
+      
       setFormData({
         title: data.title || '',
         slug: data.slug || '',
@@ -252,6 +260,17 @@ export default function PostEditor() {
         seo_keywords: Array.isArray(data.seo_keywords) ? data.seo_keywords.join(', ') : (data.seo_keywords || ''),
         meta_robots: data.meta_robots || 'index,follow'
       })
+      
+      // Verificar se a imagem foi carregada corretamente
+      if (data.featured_image) {
+        console.log('✅ Imagem carregada do post:', {
+          length: data.featured_image.length,
+          is_data_url: data.featured_image.startsWith('data:'),
+          preview: data.featured_image.substring(0, 50) + '...'
+        })
+      } else {
+        console.warn('⚠️ Post não tem imagem associada')
+      }
     } catch (error) {
       console.error('Error fetching post:', error)
       toast.error('Erro ao carregar post')

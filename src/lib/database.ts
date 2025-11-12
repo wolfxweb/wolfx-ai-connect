@@ -423,33 +423,87 @@ export const databaseHelpers = {
  */
 async function initializeAIConfigs(createdBy: string) {
   try {
+    const openaiKey = import.meta.env.VITE_OPENAI_API_KEY
+    const perplexityKey = import.meta.env.VITE_PERPLEXITY_API_KEY
+
+    // Verificar se já existe configuração de imagem
+    const existingImageConfig = await db.ai_configs
+      .where('provider')
+      .equals('image')
+      .first()
+
+    // Sempre garantir que existe uma configuração de imagem padrão
+    if (!existingImageConfig && openaiKey) {
+      const imageConfig: AIConfig = {
+        id: crypto.randomUUID(),
+        provider: 'image',
+        name: 'DALL-E 3 (Padrão)',
+        api_key: openaiKey,
+        model: 'dall-e-3',
+        image_size: '1024x1024',
+        image_quality: 'standard',
+        image_prompt_template: `Crie uma imagem profissional e atraente para um post de blog sobre: "{title}". 
+{excerpt}
+{category}
+
+A imagem deve ser:
+- Profissional e moderna
+- Visualmente atraente e chamativa
+- Relacionada ao tema do post
+- Adequada para uso em blog (formato horizontal, estilo editorial)
+- Sem texto ou logos sobrepostos
+- Estilo realista ou ilustração profissional
+- Paleta de cores harmoniosa e profissional`,
+        enabled: true,
+        is_default: true,
+        created_by: createdBy,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+
+      await db.ai_configs.add(imageConfig)
+      console.log('✅ Configuração de imagem criada: DALL-E 3 (Padrão)')
+    } else if (existingImageConfig && openaiKey && existingImageConfig.api_key !== openaiKey) {
+      // Se a API key mudou, atualizar a configuração
+      await db.ai_configs.update(existingImageConfig.id, {
+        api_key: openaiKey,
+        updated_at: new Date().toISOString()
+      })
+      console.log('✅ Configuração de imagem atualizada com nova API key')
+    }
+
+    // Verificar se já existem configurações de texto
     const configCount = await db.ai_configs.count()
     
-    if (configCount === 0) {
-      // Verificar se existem chaves de API no .env e criar configurações padrão
-      const openaiKey = import.meta.env.VITE_OPENAI_API_KEY
-      const perplexityKey = import.meta.env.VITE_PERPLEXITY_API_KEY
-
+    if (configCount === (existingImageConfig ? 1 : 0)) {
+      // Se não existem configurações de texto, criar
       const configsToAdd: AIConfig[] = []
 
       if (openaiKey) {
-        configsToAdd.push({
-          id: crypto.randomUUID(),
-          provider: 'openai',
-          name: 'OpenAI (Padrão)',
-          api_key: openaiKey,
-          model: 'gpt-5', // Usar GPT-5 como padrão
-          temperature: 0.7,
-          max_tokens: 2000,
-          verbosity: 'medium', // Parâmetro específico do GPT-5
-          reasoning_effort: 'medium', // Parâmetro específico do GPT-5
-          enabled: true,
-          is_default: true,
-          system_prompt: `Você é um especialista em criação de conteúdo para blog, SEO e marketing digital com anos de experiência.
+        // Verificar se já existe configuração OpenAI
+        const existingOpenAI = await db.ai_configs
+          .where('provider')
+          .equals('openai')
+          .first()
+
+        if (!existingOpenAI) {
+          configsToAdd.push({
+            id: crypto.randomUUID(),
+            provider: 'openai',
+            name: 'OpenAI (Padrão)',
+            api_key: openaiKey,
+            model: 'gpt-5', // Usar GPT-5 como padrão
+            temperature: 0.7,
+            max_tokens: 2000,
+            verbosity: 'medium', // Parâmetro específico do GPT-5
+            reasoning_effort: 'medium', // Parâmetro específico do GPT-5
+            enabled: true,
+            is_default: true,
+            system_prompt: `Você é um especialista em criação de conteúdo para blog, SEO e marketing digital com anos de experiência.
             Sua missão é criar conteúdo de alta qualidade, otimizado para SEO, bem estruturado, interessante e valioso para o leitor.
             IMPORTANTE: Você DEVE responder APENAS com um objeto JSON válido no formato especificado abaixo, sem nenhum texto adicional, sem explicações, sem markdown code blocks.
             O JSON deve começar diretamente com { e terminar com }.`,
-          user_prompt_template: `Crie um post de blog completo e profissional em {language} sobre o tema: "{theme}"
+            user_prompt_template: `Crie um post de blog completo e profissional em {language} sobre o tema: "{theme}"
 {category}
 
 INSTRUÇÕES DETALHADAS:
@@ -471,31 +525,39 @@ FORMATO DE RESPOSTA (JSON válido apenas):
   "seo_keywords": ["palavra-chave1", "palavra-chave2", "palavra-chave3", "palavra-chave4", "palavra-chave5"],
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
 }`,
-          created_by: createdBy,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
+            created_by: createdBy,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+        }
       }
 
       if (perplexityKey) {
-        const codeBlockNote = 'NÃO inclua markdown code blocks (```json ou ```), NÃO inclua texto antes ou depois do JSON.'
-        configsToAdd.push({
-          id: crypto.randomUUID(),
-          provider: 'perplexity',
-          name: 'Perplexity AI (Padrão)',
-          api_key: perplexityKey,
-          model: 'sonar-pro',
-          temperature: 0.7,
-          max_tokens: 2000,
-          top_p: 0.9,
-          enabled: true,
-          is_default: true,
-          system_prompt: `Você é um especialista em criação de conteúdo para blog, SEO e marketing digital com acesso a informações atualizadas da internet.
+        // Verificar se já existe configuração Perplexity
+        const existingPerplexity = await db.ai_configs
+          .where('provider')
+          .equals('perplexity')
+          .first()
+
+        if (!existingPerplexity) {
+          const codeBlockNote = 'NÃO inclua markdown code blocks (```json ou ```), NÃO inclua texto antes ou depois do JSON.'
+          configsToAdd.push({
+            id: crypto.randomUUID(),
+            provider: 'perplexity',
+            name: 'Perplexity AI (Padrão)',
+            api_key: perplexityKey,
+            model: 'sonar-pro',
+            temperature: 0.7,
+            max_tokens: 2000,
+            top_p: 0.9,
+            enabled: true,
+            is_default: true,
+            system_prompt: `Você é um especialista em criação de conteúdo para blog, SEO e marketing digital com acesso a informações atualizadas da internet.
             Sua tarefa é criar conteúdo de alta qualidade, otimizado para SEO, bem estruturado, interessante e baseado em informações recentes e relevantes.
             IMPORTANTE: Você DEVE responder APENAS com um objeto JSON válido, sem nenhum texto adicional, sem markdown code blocks, sem explicações, sem comentários.
             Use informações atualizadas e relevantes da internet quando disponíveis para enriquecer o conteúdo.
             O formato da resposta deve ser um objeto JSON válido, começando diretamente com { e terminando com }.`,
-          user_prompt_template: `Crie um post de blog completo e profissional em {language} sobre o tema: "{theme}"
+            user_prompt_template: `Crie um post de blog completo e profissional em {language} sobre o tema: "{theme}"
 {category}
 
 INSTRUÇÕES DETALHADAS:
@@ -520,40 +582,11 @@ FORMATO DE RESPOSTA (JSON válido apenas):
   "seo_keywords": ["palavra-chave1", "palavra-chave2", "palavra-chave3", "palavra-chave4", "palavra-chave5"],
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
 }`,
-          created_by: createdBy,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-      }
-
-      // Criar configuração de imagem se houver API key OpenAI (DALL-E usa a mesma API key)
-      if (openaiKey) {
-        configsToAdd.push({
-          id: crypto.randomUUID(),
-          provider: 'image',
-          name: 'DALL-E 3 (Padrão)',
-          api_key: openaiKey,
-          model: 'dall-e-3',
-          image_size: '1024x1024',
-          image_quality: 'standard',
-          image_prompt_template: `Crie uma imagem profissional e atraente para um post de blog sobre: "{title}". 
-{excerpt}
-{category}
-
-A imagem deve ser:
-- Profissional e moderna
-- Visualmente atraente e chamativa
-- Relacionada ao tema do post
-- Adequada para uso em blog (formato horizontal, estilo editorial)
-- Sem texto ou logos sobrepostos
-- Estilo realista ou ilustração profissional
-- Paleta de cores harmoniosa e profissional`,
-          enabled: true,
-          is_default: true,
-          created_by: createdBy,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
+            created_by: createdBy,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+        }
       }
 
       if (configsToAdd.length > 0) {

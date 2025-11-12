@@ -168,7 +168,9 @@ export function getAvailableModels(provider: 'openai' | 'perplexity' | 'image'):
   } else if (provider === 'image') {
     return [
       'dall-e-3',
-      'dall-e-2'
+      'dall-e-2',
+      'gpt-image-1',
+      'gpt-image-1-mini'
     ]
   }
   return []

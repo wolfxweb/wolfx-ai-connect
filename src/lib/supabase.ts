@@ -465,8 +465,41 @@ class SupabaseLikeQuery {
         }
 
         // Campos específicos por tabela
-        if (this.tableName === 'blog_posts' && !record.published_at && record.status === 'published') {
-          record.published_at = new Date().toISOString()
+        if (this.tableName === 'blog_posts') {
+          // Garantir que featured_image seja salvo corretamente
+          if (record.featured_image !== undefined && record.featured_image !== null && record.featured_image !== '') {
+            // Validar se é uma data URL válida
+            if (typeof record.featured_image === 'string') {
+              if (record.featured_image.startsWith('data:image')) {
+                console.log(`📸 [blog_posts] Imagem válida presente no registro:`, {
+                  has_image: true,
+                  image_length: record.featured_image.length,
+                  image_type: record.featured_image.substring(0, 30),
+                  is_valid_data_url: true
+                })
+                // Manter a imagem como está (já é uma data URL válida)
+              } else {
+                console.warn(`⚠️ [blog_posts] featured_image não é uma data URL válida:`, {
+                  value: record.featured_image.substring(0, 50),
+                  length: record.featured_image.length
+                })
+                // Se não for uma data URL válida, manter como está (pode ser uma URL ou outro formato)
+              }
+            } else {
+              console.warn(`⚠️ [blog_posts] featured_image não é uma string:`, typeof record.featured_image)
+              // Converter para string se possível
+              record.featured_image = String(record.featured_image)
+            }
+          } else {
+            // Se não foi definido ou é vazio, usar null explicitamente
+            record.featured_image = null
+            console.log(`ℹ️ [blog_posts] Nenhuma imagem definida no registro (será null)`)
+          }
+          
+          // Publicado_at apenas se status for published
+          if (!record.published_at && record.status === 'published') {
+            record.published_at = new Date().toISOString()
+          }
         }
 
         if (this.tableName === 'comments') {
@@ -507,7 +540,42 @@ class SupabaseLikeQuery {
           // Buscar o registro recém-criado para garantir que foi salvo corretamente
           const saved = await table.get(records[0].id)
           if (saved) {
-            console.log(`✅ [${this.tableName}] Registro inserido e verificado:`, saved)
+            console.log(`✅ [${this.tableName}] Registro inserido e verificado:`, {
+              id: saved.id,
+              ...(this.tableName === 'blog_posts' && {
+                title: saved.title,
+                has_featured_image: !!saved.featured_image,
+                featured_image_length: saved.featured_image?.length || 0,
+                featured_image_type: typeof saved.featured_image,
+                featured_image_preview: saved.featured_image?.substring(0, 50) || 'sem imagem',
+                // Verificar se a imagem do registro salvo é igual à imagem do registro inserido
+                image_match: saved.featured_image === records[0].featured_image
+              })
+            })
+            
+            // Para blog_posts, verificar detalhadamente se a imagem foi salva
+            if (this.tableName === 'blog_posts') {
+              const originalImage = records[0].featured_image
+              const savedImage = saved.featured_image
+              
+              if (originalImage && !savedImage) {
+                console.error(`❌ [blog_posts] ERRO: Imagem foi fornecida mas não foi salva!`, {
+                  original_length: originalImage.length,
+                  original_preview: originalImage.substring(0, 50),
+                  saved_has_image: false
+                })
+              } else if (originalImage && savedImage) {
+                if (originalImage === savedImage) {
+                  console.log(`✅ [blog_posts] Imagem salva corretamente e verificada`)
+                } else {
+                  console.warn(`⚠️ [blog_posts] Imagem salva mas diferente da original:`, {
+                    original_length: originalImage.length,
+                    saved_length: savedImage.length,
+                    lengths_match: originalImage.length === savedImage.length
+                  })
+                }
+              }
+            }
             
             // Verificar quantos registros existem agora na tabela
             const total = await table.count()

@@ -18,7 +18,7 @@ import { Switch } from '@/components/ui/switch'
 import { generateImageWithDALL_E } from '@/lib/imageGenerator'
 
 interface ContentGeneratorProps {
-  onContentGenerated: (content: GeneratedContent) => void
+  onContentGenerated: (content: GeneratedContent & { featured_image?: string }) => void
   onCategoryChange?: (categoryId: string) => void
   categories: Category[]
   selectedCategory?: string
@@ -48,6 +48,7 @@ export default function ContentGenerator({
   const [configured, setConfigured] = useState(false)
   const [aiProvider, setAiProvider] = useState<'chatgpt' | 'perplexity'>('chatgpt')
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true) // Salvar automaticamente por padrão
+  const [generateImage, setGenerateImage] = useState(false) // Gerar imagem separadamente (desabilitado por padrão)
 
   useEffect(() => {
     // Verificar qual provider está configurado
@@ -137,85 +138,91 @@ export default function ContentGenerator({
         ? await generatePostContentWithPerplexity(options)
         : await generatePostContent(options)
       
-      onContentGenerated(content)
-      toast.success(`Conteúdo gerado com sucesso usando ${aiProvider === 'perplexity' ? 'Perplexity AI' : 'ChatGPT'}!`)
-
-      // Se auto-save estiver habilitado, gerar imagem e salvar post
-      if (autoSaveEnabled && user?.id && categoryId) {
+      let imageDataUrl = ''
+      let imageError: string | null = null
+      
+      // Gerar imagem se o toggle estiver marcado (mesmo que não seja auto-save)
+      if (generateImage) {
         setGeneratingImage(true)
         
         try {
-          // Primeiro, gerar a imagem
-          let imageDataUrl = ''
-          let imageError: string | null = null
-          
-          try {
-            const imageOptions = {
-              title: content.title,
-              excerpt: content.excerpt,
-              content: content.content,
-              category: category?.name
-            }
-            
-            console.log('🎨 Gerando imagem para post...')
-            const imageResult = await generateImageWithDALL_E(imageOptions)
-            
-            if (imageResult && imageResult.imageDataUrl) {
-              imageDataUrl = imageResult.imageDataUrl
-              console.log('✅ Imagem gerada com sucesso, tamanho:', imageDataUrl.length)
-            } else {
-              console.warn('⚠️ Imagem gerada mas sem dataUrl')
-              imageError = 'Imagem gerada mas sem dados'
-            }
-          } catch (imgError: any) {
-            console.error('❌ Erro ao gerar imagem:', imgError)
-            imageError = imgError.message || 'Erro desconhecido ao gerar imagem'
-            // Continuar sem imagem, mas avisar o usuário
-          } finally {
-            setGeneratingImage(false)
+          const imageOptions = {
+            title: content.title,
+            excerpt: content.excerpt,
+            content: content.content,
+            category: category?.name
           }
           
-          // Agora salvar o post com a imagem (se foi gerada)
-          setSavingPost(true)
+          console.log('🎨 Gerando imagem para post...')
+          const imageResult = await generateImageWithDALL_E(imageOptions)
           
-          try {
-            // Criar objeto com imagem incluída (type-safe)
-            const contentWithImage: GeneratedContent & { featured_image?: string } = {
-              ...content,
-              featured_image: imageDataUrl || undefined // Adicionar imagem ao conteúdo
-            }
-            
-            const result = await autoSavePostAsDraft(
-              contentWithImage,
-              user.id,
-              categoryId,
-              category?.name,
-              false // Não gerar imagem, já foi gerada (ou falhou)
-            )
-            
+          if (imageResult && imageResult.imageDataUrl) {
+            imageDataUrl = imageResult.imageDataUrl
+            console.log('✅ Imagem gerada com sucesso, tamanho:', imageDataUrl.length)
+          } else {
+            console.warn('⚠️ Imagem gerada mas sem dataUrl')
+            imageError = 'Imagem gerada mas sem dados'
+          }
+        } catch (imgError: any) {
+          console.error('❌ Erro ao gerar imagem:', imgError)
+          imageError = imgError.message || 'Erro desconhecido ao gerar imagem'
+          // Continuar sem imagem, mas avisar o usuário
+        } finally {
+          setGeneratingImage(false)
+        }
+      }
+      
+      // Criar objeto com imagem incluída (se foi gerada)
+      const contentWithImage: GeneratedContent & { featured_image?: string } = {
+        ...content,
+        featured_image: imageDataUrl || undefined // Adicionar imagem apenas se foi gerada
+      }
+      
+      // Chamar callback com conteúdo e imagem
+      onContentGenerated(contentWithImage)
+      
+      if (generateImage) {
+        if (imageDataUrl) {
+          toast.success(`Conteúdo e imagem gerados com sucesso usando ${aiProvider === 'perplexity' ? 'Perplexity AI' : 'ChatGPT'}!`)
+        } else if (imageError) {
+          toast.warning(`Conteúdo gerado, mas imagem não foi gerada: ${imageError}`)
+        }
+      } else {
+        toast.success(`Conteúdo gerado com sucesso usando ${aiProvider === 'perplexity' ? 'Perplexity AI' : 'ChatGPT'}!`)
+      }
+
+      // Se auto-save estiver habilitado, salvar post (com ou sem imagem)
+      if (autoSaveEnabled && user?.id && categoryId) {
+        setSavingPost(true)
+        
+        try {
+          const result = await autoSavePostAsDraft(
+            contentWithImage,
+            user.id,
+            categoryId,
+            category?.name,
+            false // Não gerar imagem aqui, já foi gerada (ou não foi solicitada)
+          )
+          
+          if (generateImage) {
             if (imageDataUrl) {
               toast.success(`Post salvo como rascunho com imagem gerada! ID: ${result.postId}`)
             } else if (imageError) {
               toast.warning(`Post salvo como rascunho, mas imagem não foi gerada: ${imageError}`)
-            } else {
-              toast.success(`Post salvo como rascunho! ID: ${result.postId}`)
             }
-            
-            // Chamar callback se fornecido
-            if (onAutoSave) {
-              onAutoSave(result.postId)
-            }
-          } catch (saveError: any) {
-            console.error('❌ Erro ao salvar post:', saveError)
-            toast.error(`Erro ao salvar post: ${saveError.message}`)
-            throw saveError // Re-throw para que o erro seja tratado no catch externo
-          } finally {
-            setSavingPost(false)
+          } else {
+            toast.success(`Post salvo como rascunho! ID: ${result.postId}`)
           }
-        } catch (error: any) {
-          console.error('❌ Erro no processo de salvamento:', error)
-          toast.error(`Erro ao processar post: ${error.message}`)
-          setGeneratingImage(false)
+          
+          // Chamar callback se fornecido
+          if (onAutoSave) {
+            onAutoSave(result.postId)
+          }
+        } catch (saveError: any) {
+          console.error('❌ Erro ao salvar post:', saveError)
+          toast.error(`Erro ao salvar post: ${saveError.message}`)
+          throw saveError // Re-throw para que o erro seja tratado no catch externo
+        } finally {
           setSavingPost(false)
         }
       }
@@ -474,30 +481,53 @@ export default function ContentGenerator({
           </div>
         </div>
 
-        {/* Opção de salvamento automático */}
+        {/* Opções de salvamento automático e geração de imagem */}
         {user && (
-          <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-            <div className="flex items-center space-x-3 flex-1">
-              <Switch
-                id="auto-save"
-                checked={autoSaveEnabled}
-                onCheckedChange={setAutoSaveEnabled}
-              />
-              <div className="flex-1">
-                <Label htmlFor="auto-save" className="cursor-pointer font-medium text-sm">
-                  Salvar automaticamente como rascunho
-                </Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Gerar imagem e salvar post automaticamente após gerar conteúdo
-                </p>
+          <div className="space-y-3">
+            {/* Opção de salvamento automático */}
+            <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center space-x-3 flex-1">
+                <Switch
+                  id="auto-save"
+                  checked={autoSaveEnabled}
+                  onCheckedChange={setAutoSaveEnabled}
+                />
+                <div className="flex-1">
+                  <Label htmlFor="auto-save" className="cursor-pointer font-medium text-sm">
+                    Salvar automaticamente como rascunho
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Salvar post automaticamente após gerar conteúdo
+                  </p>
+                </div>
               </div>
             </div>
-            {autoSaveEnabled && (
-              <div className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 ml-2">
-                <ImageIcon className="h-3 w-3" />
-                <span>+ Imagem</span>
+
+            {/* Opção de geração de imagem (sempre disponível) */}
+            <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-950 rounded-lg border border-purple-200 dark:border-purple-800">
+              <div className="flex items-center space-x-3 flex-1">
+                <Switch
+                  id="generate-image"
+                  checked={generateImage}
+                  onCheckedChange={setGenerateImage}
+                />
+                <div className="flex-1">
+                  <Label htmlFor="generate-image" className="cursor-pointer font-medium text-sm flex items-center space-x-2">
+                    <ImageIcon className="h-4 w-4" />
+                    <span>Gerar imagem para o post</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Gerar imagem de destaque usando IA após gerar conteúdo
+                  </p>
+                </div>
               </div>
-            )}
+              {generateImage && (
+                <div className="flex items-center space-x-1 text-xs text-purple-600 dark:text-purple-400 ml-2">
+                  <CheckCircle2 className="h-3 w-3" />
+                  <span>Ativo</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

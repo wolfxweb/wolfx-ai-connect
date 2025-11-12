@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Sparkles, Loader2, Plus, Trash2, Edit2, Save, X, AlertCircle, CheckCircle2, Brain, Settings, Eye, EyeOff } from 'lucide-react'
+import { Sparkles, Loader2, Plus, Trash2, Edit2, Save, X, AlertCircle, CheckCircle2, Brain, Settings, Eye, EyeOff, Image as ImageIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { getAIConfigs, createAIConfig, updateAIConfig, deleteAIConfig, getAvailableModels, AIConfig } from '@/lib/aiConfig'
 import { useAuth } from '@/contexts/AuthContext'
@@ -155,13 +155,22 @@ A imagem deve ser:
   // Atualizar prompts padrão quando o formulário for aberto pela primeira vez
   useEffect(() => {
     if (showNewConfigForm && newConfig.provider) {
-      const provider = newConfig.provider as 'openai' | 'perplexity'
+      const provider = newConfig.provider as 'openai' | 'perplexity' | 'image'
+      const isImage = provider === 'image'
+      
       // Só preencher se estiverem vazios (primeira vez)
-      if (!newConfig.system_prompt || !newConfig.user_prompt_template) {
+      // Para imagem, não preencher system_prompt e user_prompt_template
+      if (!isImage && (!newConfig.system_prompt || !newConfig.user_prompt_template)) {
         setNewConfig(prev => ({
           ...prev,
           system_prompt: prev.system_prompt || getDefaultSystemPrompt(provider),
           user_prompt_template: prev.user_prompt_template || getDefaultUserPromptTemplate(provider)
+        }))
+      } else if (isImage && !newConfig.image_prompt_template) {
+        // Para imagem, preencher apenas o template de prompt de imagem
+        setNewConfig(prev => ({
+          ...prev,
+          image_prompt_template: prev.image_prompt_template || getDefaultImagePromptTemplate()
         }))
       }
     }
@@ -193,21 +202,28 @@ A imagem deve ser:
 
     setSaving(true)
     try {
-      const provider = newConfig.provider as 'openai' | 'perplexity'
-      const isGPT5 = newConfig.model?.startsWith('gpt-5') || newConfig.model === 'o1' || newConfig.model === 'o1-preview' || newConfig.model === 'o1-mini'
+      const provider = newConfig.provider as 'openai' | 'perplexity' | 'image'
+      const isImage = provider === 'image'
+      const isGPT5 = !isImage && (newConfig.model?.startsWith('gpt-5') || newConfig.model === 'o1' || newConfig.model === 'o1-preview' || newConfig.model === 'o1-mini')
       
       await createAIConfig({
         provider: provider,
         name: newConfig.name,
         api_key: newConfig.api_key,
         model: newConfig.model,
-        temperature: newConfig.temperature || 0.7,
-        max_tokens: newConfig.max_tokens || 2000,
-        top_p: newConfig.top_p,
+        // Campos específicos para texto (OpenAI e Perplexity)
+        temperature: isImage ? undefined : (newConfig.temperature || 0.7),
+        max_tokens: isImage ? undefined : (newConfig.max_tokens || 2000),
+        top_p: isImage ? undefined : newConfig.top_p,
         verbosity: isGPT5 ? (newConfig.verbosity || 'medium') : undefined,
         reasoning_effort: isGPT5 ? (newConfig.reasoning_effort || 'medium') : undefined,
-        system_prompt: newConfig.system_prompt || getDefaultSystemPrompt(provider),
-        user_prompt_template: newConfig.user_prompt_template || getDefaultUserPromptTemplate(provider),
+        // Campos específicos para imagem
+        image_size: isImage ? (newConfig.image_size || '1024x1024') : undefined,
+        image_quality: isImage ? (newConfig.image_quality || 'standard') : undefined,
+        image_prompt_template: isImage ? (newConfig.image_prompt_template || getDefaultImagePromptTemplate()) : undefined,
+        // Prompts (apenas para texto, não para imagem)
+        system_prompt: isImage ? '' : (newConfig.system_prompt || getDefaultSystemPrompt(provider)),
+        user_prompt_template: isImage ? '' : (newConfig.user_prompt_template || getDefaultUserPromptTemplate(provider)),
         enabled: newConfig.enabled ?? true,
         is_default: newConfig.is_default ?? false,
         created_by: user.id
@@ -298,7 +314,7 @@ A imagem deve ser:
     await handleUpdateConfig(config.id, { is_default: !config.is_default })
   }
 
-  const availableModels = getAvailableModels(newConfig.provider as 'openai' | 'perplexity')
+  const availableModels = getAvailableModels(newConfig.provider as 'openai' | 'perplexity' | 'image')
 
   if (loading) {
     return (
@@ -478,49 +494,55 @@ A imagem deve ser:
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="temperature">Temperature</Label>
-                <Input
-                  id="temperature"
-                  type="number"
-                  min="0"
-                  max="2"
-                  step="0.1"
-                  value={newConfig.temperature}
-                  onChange={(e) => setNewConfig({ ...newConfig, temperature: parseFloat(e.target.value) })}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="max_tokens">Max Tokens</Label>
-                <Input
-                  id="max_tokens"
-                  type="number"
-                  min="100"
-                  max="4000"
-                  step="100"
-                  value={newConfig.max_tokens}
-                  onChange={(e) => setNewConfig({ ...newConfig, max_tokens: parseInt(e.target.value) })}
-                />
-              </div>
-
-              {newConfig.provider === 'perplexity' && (
+              {/* Campos de texto apenas para providers de texto */}
+              {newConfig.provider !== 'image' && (
                 <div className="space-y-2">
-                  <Label htmlFor="top_p">Top P</Label>
+                  <Label htmlFor="temperature">Temperature</Label>
                   <Input
-                    id="top_p"
+                    id="temperature"
                     type="number"
                     min="0"
-                    max="1"
+                    max="2"
                     step="0.1"
-                    value={newConfig.top_p}
-                    onChange={(e) => setNewConfig({ ...newConfig, top_p: parseFloat(e.target.value) })}
+                    value={newConfig.temperature}
+                    onChange={(e) => setNewConfig({ ...newConfig, temperature: parseFloat(e.target.value) })}
                   />
                 </div>
               )}
             </div>
+
+            {/* Campos de texto apenas para providers de texto */}
+            {newConfig.provider !== 'image' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="max_tokens">Max Tokens</Label>
+                  <Input
+                    id="max_tokens"
+                    type="number"
+                    min="100"
+                    max="4000"
+                    step="100"
+                    value={newConfig.max_tokens}
+                    onChange={(e) => setNewConfig({ ...newConfig, max_tokens: parseInt(e.target.value) })}
+                  />
+                </div>
+
+                {newConfig.provider === 'perplexity' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="top_p">Top P</Label>
+                    <Input
+                      id="top_p"
+                      type="number"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={newConfig.top_p}
+                      onChange={(e) => setNewConfig({ ...newConfig, top_p: parseFloat(e.target.value) })}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Parâmetros específicos do GPT-5 */}
             {(newConfig.model?.startsWith('gpt-5') || newConfig.model === 'o1' || newConfig.model === 'o1-preview' || newConfig.model === 'o1-mini') && (
@@ -630,35 +652,40 @@ A imagem deve ser:
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="system_prompt">Prompt do Sistema</Label>
-              <Textarea
-                id="system_prompt"
-                value={newConfig.system_prompt || ''}
-                onChange={(e) => setNewConfig({ ...newConfig, system_prompt: e.target.value })}
-                placeholder="Prompt do sistema que define o comportamento do modelo"
-                rows={4}
-                className="font-mono text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                Define o comportamento do modelo. Use o prompt padrão como referência.
-              </p>
-            </div>
+            {/* Campos de prompt apenas para providers de texto */}
+            {newConfig.provider !== 'image' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="system_prompt">Prompt do Sistema</Label>
+                  <Textarea
+                    id="system_prompt"
+                    value={newConfig.system_prompt || ''}
+                    onChange={(e) => setNewConfig({ ...newConfig, system_prompt: e.target.value })}
+                    placeholder="Prompt do sistema que define o comportamento do modelo"
+                    rows={4}
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Define o comportamento do modelo. Use o prompt padrão como referência.
+                  </p>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="user_prompt_template">Template do Prompt do Usuário</Label>
-              <Textarea
-                id="user_prompt_template"
-                value={newConfig.user_prompt_template || ''}
-                onChange={(e) => setNewConfig({ ...newConfig, user_prompt_template: e.target.value })}
-                placeholder="Template do prompt do usuário (use {theme}, {category}, {tone}, {length}, {language} como variáveis)"
-                rows={10}
-                className="font-mono text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                Template do prompt. Variáveis disponíveis: {'{theme}'}, {'{category}'}, {'{tone}'}, {'{length}'}, {'{language}'}
-              </p>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="user_prompt_template">Template do Prompt do Usuário</Label>
+                  <Textarea
+                    id="user_prompt_template"
+                    value={newConfig.user_prompt_template || ''}
+                    onChange={(e) => setNewConfig({ ...newConfig, user_prompt_template: e.target.value })}
+                    placeholder="Template do prompt do usuário (use {theme}, {category}, {tone}, {length}, {language} como variáveis)"
+                    rows={10}
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Template do prompt. Variáveis disponíveis: {'{theme}'}, {'{category}'}, {'{tone}'}, {'{length}'}, {'{language}'}
+                  </p>
+                </div>
+              </>
+            )}
 
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-2">
@@ -754,8 +781,10 @@ A imagem deve ser:
                   <div className="flex items-center space-x-3">
                     {config.provider === 'openai' ? (
                       <Sparkles className="h-5 w-5 text-blue-600" />
-                    ) : (
+                    ) : config.provider === 'perplexity' ? (
                       <Brain className="h-5 w-5 text-purple-600" />
+                    ) : (
+                      <ImageIcon className="h-5 w-5 text-purple-600" />
                     )}
                     <div>
                       <CardTitle className="flex items-center space-x-2">
@@ -772,7 +801,11 @@ A imagem deve ser:
                         )}
                       </CardTitle>
                       <CardDescription>
-                        {config.provider === 'openai' ? 'OpenAI (ChatGPT)' : 'Perplexity AI'} - {config.model}
+                        {config.provider === 'openai' 
+                          ? 'OpenAI (ChatGPT)' 
+                          : config.provider === 'perplexity'
+                          ? 'Perplexity AI'
+                          : 'Geração de Imagens (DALL-E)'} - {config.model}
                       </CardDescription>
                     </div>
                   </div>

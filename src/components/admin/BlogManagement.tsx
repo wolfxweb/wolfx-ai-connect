@@ -350,11 +350,28 @@ export default function BlogManagement() {
                 {posts.map((post: any) => (
                   <TableRow key={post.id}>
                     <TableCell className="font-medium">
-                      <div className="flex items-center space-x-2">
-                        <span>{post.title}</span>
-                        {post.status === 'published' && (
-                          <Eye className="h-4 w-4 text-green-600" />
+                      <div className="flex items-center space-x-3">
+                        {post.featured_image ? (
+                          <img 
+                            src={post.featured_image} 
+                            alt={post.title}
+                            className="w-12 h-12 object-cover rounded-md flex-shrink-0"
+                            onError={(e) => {
+                              // Se a imagem falhar ao carregar, esconde o elemento
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-muted rounded-md flex-shrink-0 flex items-center justify-center">
+                            <Eye className="h-5 w-5 text-muted-foreground/50" />
+                          </div>
                         )}
+                        <div className="flex items-center space-x-2 min-w-0 flex-1">
+                          <span className="truncate">{post.title}</span>
+                          {post.status === 'published' && (
+                            <Eye className="h-4 w-4 text-green-600 flex-shrink-0" />
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>

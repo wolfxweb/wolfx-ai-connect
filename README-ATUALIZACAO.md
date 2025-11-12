@@ -1,7 +1,12 @@
 # 📖 Guia Rápido: Atualizar Aplicação na VPS
 
 ## 🎯 Atualização Rápida (3 Passos)
-
+cd /root/wolfx-ai-connect && \
+git pull origin main && \
+docker build -f Dockerfile.prod -t wolfx-ai-connect:latest . && \
+docker service update --force --image wolfx-ai-connect:latest wolfx_site_wolfx-ai-connect && \
+sleep 10 && \
+docker service ps wolfx_site_wolfx-ai-connect
 ### 1. Atualizar código
 ```bash
 cd /root/wolfx-ai-connect

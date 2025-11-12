@@ -106,7 +106,7 @@ const Index = () => {
                 🤖 Inteligência Artificial e Automação de Processos
               </Badge>
               <h1 className="text-4xl lg:text-6xl font-bold text-primary-foreground mb-6">
-                O Futuro da Sua Operação Começa Aqui
+                Transformamos Tecnologia em Resultado
               </h1>
               <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl">
                 Se a sua empresa busca eficiência operacional, inovação disruptiva e sistemas que 

@@ -15,6 +15,7 @@ import AVF from "./pages/AVF";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Admin from "./pages/Admin";
+import AIContent from "./pages/AIContent";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import PostEditor from "./pages/PostEditor";
@@ -42,6 +43,7 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/admin/ai-content" element={<AIContent />} />
                 <Route path="/admin/posts/new" element={<PostEditor />} />
                 <Route path="/admin/posts/:id/edit" element={<PostEditor />} />
                 <Route path="/blog" element={<Blog />} />

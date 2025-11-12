@@ -13,7 +13,8 @@ import {
   LogOut,
   BarChart3,
   Calendar,
-  MessageCircle
+  MessageCircle,
+  Sparkles
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -140,10 +141,14 @@ export default function Admin() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="dashboard" className="flex items-center space-x-2">
               <BarChart3 className="h-4 w-4" />
               <span>Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger value="ai-content" className="flex items-center space-x-2">
+              <Sparkles className="h-4 w-4" />
+              <span>Conteúdo com IA</span>
             </TabsTrigger>
             <TabsTrigger value="posts" className="flex items-center space-x-2">
               <FileText className="h-4 w-4" />
@@ -171,6 +176,29 @@ export default function Admin() {
               </p>
             </div>
             <DashboardContent />
+          </TabsContent>
+
+          <TabsContent value="ai-content" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">Conteúdo com IA</h2>
+              </div>
+              <Button onClick={() => navigate('/admin/ai-content')}>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Gerar Conteúdo
+              </Button>
+            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Conteúdo com IA</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button onClick={() => navigate('/admin/ai-content')} className="w-full">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Abrir Gerador de Conteúdo
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="posts" className="space-y-6">

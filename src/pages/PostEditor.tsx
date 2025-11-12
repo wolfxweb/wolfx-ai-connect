@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ArrowLeft, Save, Eye, Calendar, Loader2, Bold, Italic, Underline, List, ListOrdered, Quote, Link, Type } from 'lucide-react'
+import { ArrowLeft, Save, Eye, Calendar, Loader2, Bold, Italic, Underline, List, ListOrdered, Quote, Link, Type, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import ImageUpload from '@/components/ImageUpload'
 
@@ -164,11 +164,49 @@ export default function PostEditor() {
 
   const isEditing = !!id
 
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim()
+  }
+
   useEffect(() => {
     fetchCategories()
     if (isEditing) {
       fetchPost()
     } else {
+      // Verificar se há conteúdo gerado por IA no localStorage
+      const aiGeneratedContent = localStorage.getItem('aiGeneratedContent')
+      if (aiGeneratedContent) {
+        try {
+          const content = JSON.parse(aiGeneratedContent)
+          setFormData(prev => ({
+            ...prev,
+            title: content.title || prev.title,
+            slug: content.title ? generateSlug(content.title) : prev.slug,
+            excerpt: content.excerpt || prev.excerpt,
+            content: content.content || prev.content,
+            seo_title: content.seo_title || prev.seo_title,
+            seo_description: content.seo_description || prev.seo_description,
+            seo_keywords: Array.isArray(content.seo_keywords) 
+              ? content.seo_keywords.join(', ') 
+              : (content.seo_keywords || prev.seo_keywords),
+            tags: Array.isArray(content.tags) 
+              ? content.tags.join(', ') 
+              : (content.tags || prev.tags)
+          }))
+          // Limpar conteúdo do localStorage após usar
+          localStorage.removeItem('aiGeneratedContent')
+          toast.success('Conteúdo gerado por IA carregado!')
+        } catch (error) {
+          console.error('Erro ao carregar conteúdo gerado por IA:', error)
+        }
+      }
       setLoading(false)
     }
   }, [id])
@@ -221,17 +259,6 @@ export default function PostEditor() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -398,6 +425,35 @@ export default function PostEditor() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <form onSubmit={handleSubmit}>
+          {/* Botão para gerar conteúdo com IA - Apenas para novos posts */}
+          {!isEditing && (
+            <div className="mb-6">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold flex items-center space-x-2">
+                        <Sparkles className="h-5 w-5 text-purple-600" />
+                        <span>Gerar Conteúdo com IA</span>
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Use a inteligência artificial para gerar conteúdo completo para seu post
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => navigate('/admin/ai-content')}
+                      variant="outline"
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Gerar com IA
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           <Tabs defaultValue="info" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="info">Informações Básicas</TabsTrigger>

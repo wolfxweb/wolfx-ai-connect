@@ -10,8 +10,9 @@ export default defineConfig(({ mode }) => {
   
   return {
     server: {
-      host: "::",
+      host: "0.0.0.0",
       port: 8080,
+      strictPort: true, // Garantir que sempre use a porta 8080 (ou falhar se estiver ocupada)
     },
     plugins: [react(), isDev && componentTagger()].filter(Boolean),
     resolve: {
@@ -22,13 +23,13 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       include: ["dexie"],
-      force: true,
+      exclude: [], // Não excluir nada
       esbuildOptions: {
         target: "es2020",
+        define: {
+          global: "globalThis",
+        },
       },
-    },
-    ssr: {
-      noExternal: ["dexie"],
     },
   };
 });

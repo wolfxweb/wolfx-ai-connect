@@ -513,7 +513,8 @@ class SupabaseLikeQuery {
             const total = await table.count()
             console.log(`📊 [${this.tableName}] Total de registros após inserção: ${total}`)
             
-            return { data: saved, error: null }
+            // Retornar como array para compatibilidade com código que espera array
+            return { data: [saved], error: null }
           } else {
             console.error(`❌ [${this.tableName}] Erro: Registro não encontrado após inserção. ID: ${records[0].id}`)
             
@@ -521,7 +522,8 @@ class SupabaseLikeQuery {
             const allRecords = await table.toArray()
             console.log(`📊 [${this.tableName}] Todos os registros na tabela:`, allRecords)
             
-            return { data: records[0], error: null }
+            // Retornar como array mesmo que não tenha sido encontrado (fallback)
+            return { data: [records[0]], error: null }
           }
         } catch (addError: any) {
           console.error(`❌ [${this.tableName}] Erro ao inserir:`, addError)
@@ -530,7 +532,7 @@ class SupabaseLikeQuery {
             const existing = await table.get(records[0].id)
             if (existing) {
               console.log(`⚠️ [${this.tableName}] Registro já existe, retornando existente`)
-              return { data: existing, error: null }
+              return { data: [existing], error: null }
             }
           }
           throw addError

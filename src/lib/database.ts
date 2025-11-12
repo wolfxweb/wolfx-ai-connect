@@ -60,6 +60,31 @@ export interface Comment {
   updated_at: string
 }
 
+export interface AIConfig {
+  id: string
+  provider: 'openai' | 'perplexity' | 'image'
+  name: string // Nome descritivo da configuração (ex: "OpenAI Principal", "Perplexity Pro", "DALL-E 3")
+  api_key: string // Token de API (será armazenado de forma ofuscada)
+  model: string // Modelo a ser usado (ex: "gpt-5", "gpt-4o-mini", "sonar-pro", "dall-e-3")
+  temperature?: number
+  max_tokens?: number
+  top_p?: number
+  // Parâmetros específicos do GPT-5
+  verbosity?: 'low' | 'medium' | 'high' // Controla a extensão das respostas (GPT-5)
+  reasoning_effort?: 'low' | 'medium' | 'high' // Controla a profundidade do raciocínio (GPT-5)
+  system_prompt?: string // Prompt do sistema personalizado
+  user_prompt_template?: string // Template do prompt do usuário (pode usar variáveis como {theme}, {category}, etc.)
+  // Parâmetros específicos para geração de imagens
+  image_size?: '1024x1024' | '1792x1024' | '1024x1792' // Tamanho da imagem (DALL-E)
+  image_quality?: 'standard' | 'hd' // Qualidade da imagem (DALL-E)
+  image_prompt_template?: string // Template do prompt de imagem (pode usar variáveis como {title}, {excerpt}, {category})
+  enabled: boolean
+  is_default: boolean // Se é a configuração padrão para o provider
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
 // Classe do banco de dados
 export class WolfxDatabase extends Dexie {
   users!: Table<User, string>
@@ -67,6 +92,7 @@ export class WolfxDatabase extends Dexie {
   categories!: Table<Category, string>
   blog_posts!: Table<BlogPost, string>
   comments!: Table<Comment, string>
+  ai_configs!: Table<AIConfig, string>
 
   constructor() {
     super('WolfxDatabase')
@@ -78,6 +104,118 @@ export class WolfxDatabase extends Dexie {
       categories: 'id, slug, created_by, created_at',
       blog_posts: 'id, slug, status, category_id, author_id, published_at, created_at',
       comments: 'id, post_id, author_id, parent_id, status, created_at'
+    })
+
+    // Versão 2: Adiciona tabela de configurações de IA
+    this.version(2).stores({
+      users: 'id, email, role, status, created_at',
+      profiles: 'id, email, role, status, created_at',
+      categories: 'id, slug, created_by, created_at',
+      blog_posts: 'id, slug, status, category_id, author_id, published_at, created_at',
+      comments: 'id, post_id, author_id, parent_id, status, created_at',
+      ai_configs: 'id, provider, enabled, is_default, created_at'
+    })
+
+    // Versão 3: Atualiza prompts padrão para versões mais recentes
+    this.version(3).stores({
+      users: 'id, email, role, status, created_at',
+      profiles: 'id, email, role, status, created_at',
+      categories: 'id, slug, created_by, created_at',
+      blog_posts: 'id, slug, status, category_id, author_id, published_at, created_at',
+      comments: 'id, post_id, author_id, parent_id, status, created_at',
+      ai_configs: 'id, provider, enabled, is_default, created_at'
+    }).upgrade(async (tx) => {
+      // Atualizar prompts de configurações OpenAI existentes
+      const openaiConfigs = await tx.table('ai_configs')
+        .where('provider').equals('openai')
+        .toArray()
+      
+      const updatedSystemPrompt = `Você é um especialista em criação de conteúdo para blog, SEO e marketing digital com anos de experiência.
+            Sua missão é criar conteúdo de alta qualidade, otimizado para SEO, bem estruturado, interessante e valioso para o leitor.
+            IMPORTANTE: Você DEVE responder APENAS com um objeto JSON válido no formato especificado abaixo, sem nenhum texto adicional, sem explicações, sem markdown code blocks.
+            O JSON deve começar diretamente com { e terminar com }.`
+      
+      const updatedUserPromptTemplate = `Crie um post de blog completo e profissional em {language} sobre o tema: "{theme}"
+{category}
+
+INSTRUÇÕES DETALHADAS:
+- Tono de escrita: {tone}
+- Tamanho do conteúdo: {length}
+- Otimizado para SEO (use palavras-chave estrategicamente, mas de forma natural)
+- Bem estruturado com títulos H2 (##) e H3 (###) quando necessário
+- Conteúdo interessante, útil, atualizado e valioso para o leitor
+- Use listas, parágrafos e formatação Markdown apropriadamente
+- Inclua informações práticas e acionáveis quando relevante
+
+FORMATO DE RESPOSTA (JSON válido apenas):
+{
+  "title": "Título do post (60-70 caracteres, otimizado para SEO e atraente)",
+  "excerpt": "Resumo curto e atraente do post (150-200 caracteres, que desperte interesse)",
+  "content": "Conteúdo completo do post em Markdown, com títulos (## para H2, ### para H3), listas, parágrafos bem formatados, e formatação adequada",
+  "seo_title": "Título otimizado para SEO (50-60 caracteres, incluindo palavras-chave principais)",
+  "seo_description": "Meta descrição otimizada para SEO (150-160 caracteres, que resuma o conteúdo e inclua call-to-action)",
+  "seo_keywords": ["palavra-chave1", "palavra-chave2", "palavra-chave3", "palavra-chave4", "palavra-chave5"],
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
+}`
+
+      for (const config of openaiConfigs) {
+        const isGPT5 = config.model?.startsWith('gpt-5') || config.model === 'o1' || config.model === 'o1-preview' || config.model === 'o1-mini'
+        await tx.table('ai_configs').update(config.id, {
+          system_prompt: updatedSystemPrompt,
+          user_prompt_template: updatedUserPromptTemplate,
+          // Adicionar parâmetros GPT-5 se o modelo for GPT-5
+          verbosity: isGPT5 ? (config.verbosity || 'medium') : config.verbosity,
+          reasoning_effort: isGPT5 ? (config.reasoning_effort || 'medium') : config.reasoning_effort,
+          updated_at: new Date().toISOString()
+        })
+      }
+
+      // Atualizar prompts de configurações Perplexity existentes
+      const perplexityConfigs = await tx.table('ai_configs')
+        .where('provider').equals('perplexity')
+        .toArray()
+      
+      const codeBlockNote = 'NÃO inclua markdown code blocks (```json ou ```), NÃO inclua texto antes ou depois do JSON.'
+      
+      const updatedPerplexitySystemPrompt = `Você é um especialista em criação de conteúdo para blog, SEO e marketing digital com acesso a informações atualizadas da internet.
+            Sua tarefa é criar conteúdo de alta qualidade, otimizado para SEO, bem estruturado, interessante e baseado em informações recentes e relevantes.
+            IMPORTANTE: Você DEVE responder APENAS com um objeto JSON válido, sem nenhum texto adicional, sem markdown code blocks, sem explicações, sem comentários.
+            Use informações atualizadas e relevantes da internet quando disponíveis para enriquecer o conteúdo.
+            O formato da resposta deve ser um objeto JSON válido, começando diretamente com { e terminando com }.`
+      
+      const updatedPerplexityUserPromptTemplate = `Crie um post de blog completo e profissional em {language} sobre o tema: "{theme}"
+{category}
+
+INSTRUÇÕES DETALHADAS:
+- Tono de escrita: {tone}
+- Tamanho do conteúdo: {length}
+- Otimizado para SEO (use palavras-chave estrategicamente, mas de forma natural)
+- Bem estruturado com títulos H2 (##) e H3 (###) quando necessário
+- Conteúdo interessante, útil, atualizado e valioso para o leitor
+- Use informações recentes e relevantes da internet para enriquecer o conteúdo
+- Use listas, parágrafos e formatação Markdown apropriadamente
+- Inclua informações práticas e acionáveis quando relevante
+
+IMPORTANTE: Responda APENAS com um objeto JSON válido. ${codeBlockNote} Comece diretamente com { e termine com }.
+
+FORMATO DE RESPOSTA (JSON válido apenas):
+{
+  "title": "Título do post (60-70 caracteres, otimizado para SEO e atraente)",
+  "excerpt": "Resumo curto e atraente do post (150-200 caracteres, que desperte interesse)",
+  "content": "Conteúdo completo do post em Markdown, com títulos (## para H2, ### para H3), listas, parágrafos bem formatados, e formatação adequada",
+  "seo_title": "Título otimizado para SEO (50-60 caracteres, incluindo palavras-chave principais)",
+  "seo_description": "Meta descrição otimizada para SEO (150-160 caracteres, que resuma o conteúdo e inclua call-to-action)",
+  "seo_keywords": ["palavra-chave1", "palavra-chave2", "palavra-chave3", "palavra-chave4", "palavra-chave5"],
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
+}`
+
+      for (const config of perplexityConfigs) {
+        await tx.table('ai_configs').update(config.id, {
+          system_prompt: updatedPerplexitySystemPrompt,
+          user_prompt_template: updatedPerplexityUserPromptTemplate,
+          updated_at: new Date().toISOString()
+        })
+      }
     })
   }
 }
@@ -271,9 +409,160 @@ export const databaseHelpers = {
         await db.blog_posts.bulkAdd(examplePosts)
         console.log('✅ Posts de exemplo criados')
       }
+
+      // Inicializar configurações de IA se não existirem
+      await initializeAIConfigs(admin?.id || 'system')
     } catch (error) {
       console.error('Erro ao inicializar banco de dados:', error)
     }
+  }
+}
+
+/**
+ * Inicializa configurações de IA no banco de dados
+ */
+async function initializeAIConfigs(createdBy: string) {
+  try {
+    const configCount = await db.ai_configs.count()
+    
+    if (configCount === 0) {
+      // Verificar se existem chaves de API no .env e criar configurações padrão
+      const openaiKey = import.meta.env.VITE_OPENAI_API_KEY
+      const perplexityKey = import.meta.env.VITE_PERPLEXITY_API_KEY
+
+      const configsToAdd: AIConfig[] = []
+
+      if (openaiKey) {
+        configsToAdd.push({
+          id: crypto.randomUUID(),
+          provider: 'openai',
+          name: 'OpenAI (Padrão)',
+          api_key: openaiKey,
+          model: 'gpt-5', // Usar GPT-5 como padrão
+          temperature: 0.7,
+          max_tokens: 2000,
+          verbosity: 'medium', // Parâmetro específico do GPT-5
+          reasoning_effort: 'medium', // Parâmetro específico do GPT-5
+          enabled: true,
+          is_default: true,
+          system_prompt: `Você é um especialista em criação de conteúdo para blog, SEO e marketing digital com anos de experiência.
+            Sua missão é criar conteúdo de alta qualidade, otimizado para SEO, bem estruturado, interessante e valioso para o leitor.
+            IMPORTANTE: Você DEVE responder APENAS com um objeto JSON válido no formato especificado abaixo, sem nenhum texto adicional, sem explicações, sem markdown code blocks.
+            O JSON deve começar diretamente com { e terminar com }.`,
+          user_prompt_template: `Crie um post de blog completo e profissional em {language} sobre o tema: "{theme}"
+{category}
+
+INSTRUÇÕES DETALHADAS:
+- Tono de escrita: {tone}
+- Tamanho do conteúdo: {length}
+- Otimizado para SEO (use palavras-chave estrategicamente, mas de forma natural)
+- Bem estruturado com títulos H2 (##) e H3 (###) quando necessário
+- Conteúdo interessante, útil, atualizado e valioso para o leitor
+- Use listas, parágrafos e formatação Markdown apropriadamente
+- Inclua informações práticas e acionáveis quando relevante
+
+FORMATO DE RESPOSTA (JSON válido apenas):
+{
+  "title": "Título do post (60-70 caracteres, otimizado para SEO e atraente)",
+  "excerpt": "Resumo curto e atraente do post (150-200 caracteres, que desperte interesse)",
+  "content": "Conteúdo completo do post em Markdown, com títulos (## para H2, ### para H3), listas, parágrafos bem formatados, e formatação adequada",
+  "seo_title": "Título otimizado para SEO (50-60 caracteres, incluindo palavras-chave principais)",
+  "seo_description": "Meta descrição otimizada para SEO (150-160 caracteres, que resuma o conteúdo e inclua call-to-action)",
+  "seo_keywords": ["palavra-chave1", "palavra-chave2", "palavra-chave3", "palavra-chave4", "palavra-chave5"],
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
+}`,
+          created_by: createdBy,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+      }
+
+      if (perplexityKey) {
+        const codeBlockNote = 'NÃO inclua markdown code blocks (```json ou ```), NÃO inclua texto antes ou depois do JSON.'
+        configsToAdd.push({
+          id: crypto.randomUUID(),
+          provider: 'perplexity',
+          name: 'Perplexity AI (Padrão)',
+          api_key: perplexityKey,
+          model: 'sonar-pro',
+          temperature: 0.7,
+          max_tokens: 2000,
+          top_p: 0.9,
+          enabled: true,
+          is_default: true,
+          system_prompt: `Você é um especialista em criação de conteúdo para blog, SEO e marketing digital com acesso a informações atualizadas da internet.
+            Sua tarefa é criar conteúdo de alta qualidade, otimizado para SEO, bem estruturado, interessante e baseado em informações recentes e relevantes.
+            IMPORTANTE: Você DEVE responder APENAS com um objeto JSON válido, sem nenhum texto adicional, sem markdown code blocks, sem explicações, sem comentários.
+            Use informações atualizadas e relevantes da internet quando disponíveis para enriquecer o conteúdo.
+            O formato da resposta deve ser um objeto JSON válido, começando diretamente com { e terminando com }.`,
+          user_prompt_template: `Crie um post de blog completo e profissional em {language} sobre o tema: "{theme}"
+{category}
+
+INSTRUÇÕES DETALHADAS:
+- Tono de escrita: {tone}
+- Tamanho do conteúdo: {length}
+- Otimizado para SEO (use palavras-chave estrategicamente, mas de forma natural)
+- Bem estruturado com títulos H2 (##) e H3 (###) quando necessário
+- Conteúdo interessante, útil, atualizado e valioso para o leitor
+- Use informações recentes e relevantes da internet para enriquecer o conteúdo
+- Use listas, parágrafos e formatação Markdown apropriadamente
+- Inclua informações práticas e acionáveis quando relevante
+
+IMPORTANTE: Responda APENAS com um objeto JSON válido. ${codeBlockNote} Comece diretamente com { e termine com }.
+
+FORMATO DE RESPOSTA (JSON válido apenas):
+{
+  "title": "Título do post (60-70 caracteres, otimizado para SEO e atraente)",
+  "excerpt": "Resumo curto e atraente do post (150-200 caracteres, que desperte interesse)",
+  "content": "Conteúdo completo do post em Markdown, com títulos (## para H2, ### para H3), listas, parágrafos bem formatados, e formatação adequada",
+  "seo_title": "Título otimizado para SEO (50-60 caracteres, incluindo palavras-chave principais)",
+  "seo_description": "Meta descrição otimizada para SEO (150-160 caracteres, que resuma o conteúdo e inclua call-to-action)",
+  "seo_keywords": ["palavra-chave1", "palavra-chave2", "palavra-chave3", "palavra-chave4", "palavra-chave5"],
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
+}`,
+          created_by: createdBy,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+      }
+
+      // Criar configuração de imagem se houver API key OpenAI (DALL-E usa a mesma API key)
+      if (openaiKey) {
+        configsToAdd.push({
+          id: crypto.randomUUID(),
+          provider: 'image',
+          name: 'DALL-E 3 (Padrão)',
+          api_key: openaiKey,
+          model: 'dall-e-3',
+          image_size: '1024x1024',
+          image_quality: 'standard',
+          image_prompt_template: `Crie uma imagem profissional e atraente para um post de blog sobre: "{title}". 
+{excerpt}
+{category}
+
+A imagem deve ser:
+- Profissional e moderna
+- Visualmente atraente e chamativa
+- Relacionada ao tema do post
+- Adequada para uso em blog (formato horizontal, estilo editorial)
+- Sem texto ou logos sobrepostos
+- Estilo realista ou ilustração profissional
+- Paleta de cores harmoniosa e profissional`,
+          enabled: true,
+          is_default: true,
+          created_by: createdBy,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+      }
+
+      if (configsToAdd.length > 0) {
+        await db.ai_configs.bulkAdd(configsToAdd)
+        console.log(`✅ ${configsToAdd.length} configuração(ões) de IA criada(s)`)
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao inicializar configurações de IA:', error)
   }
 }
 

@@ -112,7 +112,7 @@ export default function BlogManagement() {
       })) || []
 
       console.log(`📋 Posts processados: ${postsWithRelations.length}`)
-      
+
       setPosts(postsWithRelations)
       setTotalPosts(count || 0)
       setTotalPages(Math.ceil((count || 0) / postsPerPage))

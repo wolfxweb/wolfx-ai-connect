@@ -80,9 +80,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setSession(currentSession)
       setUser(currentSession.user)
       fetchUserProfile(currentSession.user.id)
-    }
-    
-    setLoading(false)
+      }
+      
+      setLoading(false)
   }, [])
 
   const signUp = async (email: string, password: string, name?: string) => {
@@ -96,15 +96,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // NÃO fazer login automaticamente após registro
       // Usuários inativos precisam ser ativados por um admin antes de poderem fazer login
       // Retornar mensagem informando que a conta foi criada mas precisa ser ativada
-      return { 
+          return { 
         error: null,
         message: 'Conta criada com sucesso! Sua conta precisa ser ativada por um administrador antes de você poder fazer login.'
-      }
+            } 
     } catch (err: any) {
-      return {
-        error: {
-          message: 'Erro inesperado ao criar conta. Tente novamente.'
-        }
+      return { 
+        error: { 
+          message: 'Erro inesperado ao criar conta. Tente novamente.' 
+        } 
       }
     }
   }
@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('❌ Login error:', result.error)
         return result
       }
-
+      
       console.log('✅ Login successful')
       
       if (result.data) {
@@ -131,10 +131,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return result
     } catch (err: any) {
       console.error('💥 Login exception:', err)
-      return {
-        error: {
-          message: 'Erro inesperado ao fazer login. Tente novamente.'
-        }
+      return { 
+        error: { 
+          message: 'Erro inesperado ao fazer login. Tente novamente.' 
+        } 
       }
     }
   }
@@ -147,7 +147,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUserProfile(null)
       return result
     } catch (error: any) {
-      return { error }
+    return { error }
     }
   }
 

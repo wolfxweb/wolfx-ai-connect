@@ -113,22 +113,22 @@ const Footer = () => {
               </li>
               {!user && (
                 <>
-                  <li>
+              <li>
                     <Link 
                       to="/login" 
                       className="text-primary-foreground/60 hover:text-primary-foreground/80 transition-colors text-sm"
                     >
                       Login
                     </Link>
-                  </li>
-                  <li>
+              </li>
+              <li>
                     <Link 
                       to="/register" 
                       className="text-primary-foreground/60 hover:text-primary-foreground/80 transition-colors text-sm"
                     >
                       Registro
                     </Link>
-                  </li>
+              </li>
                 </>
               )}
             </ul>

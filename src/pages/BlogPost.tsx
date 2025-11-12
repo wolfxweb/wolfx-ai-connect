@@ -8,6 +8,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, Calendar, User, Tag, Share2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import Comments from '@/components/Comments'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeRaw from 'rehype-raw'
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>()
@@ -138,40 +141,60 @@ export default function BlogPost() {
   const renderContent = (content: string) => {
     if (!content) return null
 
-    // Processar formatação básica
-    let processedContent = content
-
-    // Converter quebras de linha para <br>
-    processedContent = processedContent.replace(/\n/g, '<br>')
-
-    // Processar negrito **texto**
-    processedContent = processedContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-
-    // Processar itálico *texto*
-    processedContent = processedContent.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
-
-    // Processar sublinhado <u>texto</u>
-    processedContent = processedContent.replace(/<u>(.*?)<\/u>/g, '<u>$1</u>')
-
-    // Processar links [texto](url)
-    processedContent = processedContent.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>')
-
-    // Processar listas com marcadores - item
-    processedContent = processedContent.replace(/^- (.+)$/gm, '<li>$1</li>')
-    processedContent = processedContent.replace(/(<li>.*<\/li>)/s, '<ul class="list-disc pl-6 my-4">$1</ul>')
-
-    // Processar listas numeradas 1. item
-    processedContent = processedContent.replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-    processedContent = processedContent.replace(/(<li>.*<\/li>)/s, '<ol class="list-decimal pl-6 my-4">$1</ol>')
-
-    // Processar citações > texto
-    processedContent = processedContent.replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-gray-300 pl-4 italic my-4">$1</blockquote>')
-
-    // Processar cabeçalhos ## Título
-    processedContent = processedContent.replace(/^## (.+)$/gm, '<h2 class="text-2xl font-bold mt-6 mb-4">$1</h2>')
-    processedContent = processedContent.replace(/^### (.+)$/gm, '<h3 class="text-xl font-bold mt-4 mb-2">$1</h3>')
-
-    return <div dangerouslySetInnerHTML={{ __html: processedContent }} />
+    return (
+      <div className="prose prose-lg prose-gray max-w-none
+        prose-headings:font-bold prose-headings:text-gray-900
+        prose-h1:text-4xl prose-h1:mt-10 prose-h1:mb-6
+        prose-h2:text-3xl prose-h2:mt-8 prose-h2:mb-4
+        prose-h3:text-2xl prose-h3:mt-6 prose-h3:mb-3
+        prose-h4:text-xl prose-h4:mt-4 prose-h4:mb-2
+        prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4
+        prose-a:text-blue-600 prose-a:font-medium prose-a:no-underline 
+        hover:prose-a:text-blue-800 hover:prose-a:underline
+        prose-strong:text-gray-900 prose-strong:font-semibold
+        prose-em:text-gray-700 prose-em:italic
+        prose-ul:list-disc prose-ul:pl-6 prose-ul:my-4
+        prose-ol:list-decimal prose-ol:pl-6 prose-ol:my-4
+        prose-li:text-gray-700 prose-li:my-1
+        prose-blockquote:border-l-4 prose-blockquote:border-blue-500 
+        prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:my-6 
+        prose-blockquote:text-gray-600 prose-blockquote:bg-blue-50 
+        prose-blockquote:py-2 prose-blockquote:rounded-r
+        prose-code:bg-gray-100 prose-code:text-gray-800 prose-code:px-1.5 
+        prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono
+        prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:p-4 
+        prose-pre:rounded-lg prose-pre:overflow-x-auto prose-pre:my-4
+        prose-img:rounded-lg prose-img:shadow-md prose-img:my-6 prose-img:mx-auto
+        prose-hr:border-gray-300 prose-hr:my-8
+        prose-table:w-full prose-table:border-collapse prose-table:my-4
+        prose-th:bg-gray-100 prose-th:border prose-th:border-gray-300 
+        prose-th:px-4 prose-th:py-2 prose-th:text-left prose-th:font-semibold
+        prose-td:border prose-td:border-gray-300 prose-td:px-4 prose-td:py-2">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          components={{
+            // Customizar links para abrir em nova aba
+            a: ({ node, href, children, ...props }: any) => (
+              <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+                {children}
+              </a>
+            ),
+            // Customizar imagens
+            img: ({ node, src, alt, ...props }: any) => (
+              <img 
+                src={src} 
+                alt={alt || ''} 
+                className="rounded-lg shadow-md my-6 mx-auto max-w-full h-auto" 
+                {...props}
+              />
+            ),
+          }}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+    )
   }
 
   const sharePost = async () => {
@@ -278,9 +301,7 @@ export default function BlogPost() {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-sm p-8">
-          <div className="prose prose-lg max-w-none">
             {renderContent(post.content)}
-          </div>
           
           {post.tags && post.tags.length > 0 && (
             <div className="mt-8 pt-8 border-t">

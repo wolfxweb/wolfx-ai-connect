@@ -7,6 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import Navigation from "./components/Navigation";
 import Footer from "./components/Footer";
 import AnimatedBackground from "./components/AnimatedBackground";
+import WhatsAppFloatButton from "./components/WhatsAppFloatButton";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import AAI from "./pages/AAI";
@@ -55,6 +56,7 @@ const App = () => (
               </Routes>
             </main>
             <Footer />
+            <WhatsAppFloatButton />
           </div>
         </BrowserRouter>
       </TooltipProvider>

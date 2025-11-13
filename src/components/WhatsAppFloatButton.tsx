@@ -29,8 +29,8 @@ const WhatsAppFloatButton = () => {
         </div>
         
         {/* Tooltip */}
-        <div className="absolute bottom-full right-0 mb-3 hidden group-hover:block whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <div className="bg-gray-900 text-white text-sm px-4 py-2 rounded-lg shadow-xl">
+        <div className="absolute bottom-full right-0 mb-3 hidden group-hover:block whitespace-nowrap">
+          <div className="bg-gray-900 text-white text-sm px-4 py-2 rounded-lg shadow-xl relative">
             Fale conosco no WhatsApp
             <div className="absolute top-full right-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
           </div>

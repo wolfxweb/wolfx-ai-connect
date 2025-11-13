@@ -101,13 +101,13 @@ const Index = () => {
       <section className="hero-section py-20 lg:py-32 relative overflow-hidden">
         {/* Animated Robot Icons */}
         <div className="hero-robot-1 absolute">
-          <Bot className="w-16 h-16 text-primary-foreground/20" />
+          <Bot className="w-20 h-20 text-primary-foreground/30" />
         </div>
         <div className="hero-robot-2 absolute">
-          <Bot className="w-20 h-20 text-primary-foreground/25" />
+          <Bot className="w-24 h-24 text-primary-foreground/35" />
         </div>
         <div className="hero-robot-3 absolute">
-          <Bot className="w-14 h-14 text-primary-foreground/15" />
+          <Bot className="w-16 h-16 text-primary-foreground/25" />
         </div>
         
         <div className="hero-content container mx-auto px-4 relative z-10">

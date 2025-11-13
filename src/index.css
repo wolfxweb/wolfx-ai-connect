@@ -163,23 +163,23 @@
   @keyframes robot-float-1 {
     0% {
       transform: translate(0%, 0%) scale(1) rotate(0deg);
-      opacity: 0.3;
+      opacity: 0.4;
     }
     25% {
       transform: translate(15%, 25%) scale(1.2) rotate(5deg);
-      opacity: 0.5;
+      opacity: 0.6;
     }
     50% {
       transform: translate(30%, 15%) scale(0.9) rotate(-5deg);
-      opacity: 0.4;
+      opacity: 0.5;
     }
     75% {
       transform: translate(15%, -10%) scale(1.1) rotate(3deg);
-      opacity: 0.45;
+      opacity: 0.55;
     }
     100% {
       transform: translate(0%, 0%) scale(1) rotate(0deg);
-      opacity: 0.3;
+      opacity: 0.4;
     }
   }
   
@@ -217,7 +217,6 @@
   .hero-robot-3 {
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
     z-index: 1;
     animation: robot-float-3 18s ease-in-out infinite;
     pointer-events: none;

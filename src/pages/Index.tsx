@@ -14,6 +14,7 @@ import {
   BarChart3,
   DollarSign,
   UserCircle,
+  Bot,
 } from "lucide-react";
 
 const Index = () => {
@@ -97,8 +98,19 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="hero-section py-20 lg:py-32">
-        <div className="hero-content container mx-auto px-4">
+      <section className="hero-section py-20 lg:py-32 relative overflow-hidden">
+        {/* Animated Robot Icons */}
+        <div className="hero-robot-1 absolute">
+          <Bot className="w-16 h-16 text-primary-foreground/20" />
+        </div>
+        <div className="hero-robot-2 absolute">
+          <Bot className="w-20 h-20 text-primary-foreground/25" />
+        </div>
+        <div className="hero-robot-3 absolute">
+          <Bot className="w-14 h-14 text-primary-foreground/15" />
+        </div>
+        
+        <div className="hero-content container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <Badge className="mb-6 accent-button">
               🤖 Inteligência Artificial e Automação de Processos

@@ -15,7 +15,6 @@ import {
   DollarSign,
   UserCircle,
 } from "lucide-react";
-import heroImage from "@/assets/hero-wolfx.jpg";
 
 const Index = () => {
   const whatsappLink = "https://wa.me/5548988114708";
@@ -100,44 +99,35 @@ const Index = () => {
       {/* Hero Section */}
       <section className="hero-section py-20 lg:py-32">
         <div className="hero-content container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="text-center lg:text-left">
-              <Badge className="mb-6 accent-button">
-                🤖 Inteligência Artificial e Automação de Processos
-              </Badge>
-              <h1 className="text-4xl lg:text-6xl font-bold text-primary-foreground mb-6">
-                Transformamos Tecnologia em Resultado
-              </h1>
-              <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl">
-                Se a sua empresa busca eficiência operacional, inovação disruptiva e sistemas que 
-                pensam e agem por você, a Wolfx é o seu parceiro estratégico. Somos especialistas 
-                em desenvolver soluções digitais de alto desempenho que integram nativamente 
-                Inteligência Artificial (IA) e Automação de Processos (RPA), transformando 
-                desafios complexos em vantagens competitivas.
-              </p>
-              <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl">
-                Desenvolvemos Marketplaces, SaaS e plataformas personalizadas que não apenas 
-                atendem às suas necessidades atuais, mas que estão prontas para o futuro.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <a 
-                  href={`${whatsappLink}?text=${encodeURIComponent(whatsappMessage)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button size="lg" className="glow-button text-primary-foreground hover:text-primary-foreground">
-                    Iniciar a Transformação Digital
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </a>
-              </div>
-            </div>
-            <div className="flex justify-center">
-              <img 
-                src={heroImage} 
-                alt="Wolfx - Inteligência Artificial e Automação" 
-                className="w-full max-w-lg rounded-2xl shadow-elegant"
-              />
+          <div className="max-w-4xl mx-auto text-center">
+            <Badge className="mb-6 accent-button">
+              🤖 Inteligência Artificial e Automação de Processos
+            </Badge>
+            <h1 className="text-4xl lg:text-6xl font-bold text-primary-foreground mb-6">
+              Transformamos Tecnologia em Resultado
+            </h1>
+            <p className="text-xl text-primary-foreground/90 mb-8 max-w-3xl mx-auto">
+              Se a sua empresa busca eficiência operacional, inovação disruptiva e sistemas que 
+              pensam e agem por você, a Wolfx é o seu parceiro estratégico. Somos especialistas 
+              em desenvolver soluções digitais de alto desempenho que integram nativamente 
+              Inteligência Artificial (IA) e Automação de Processos (RPA), transformando 
+              desafios complexos em vantagens competitivas.
+            </p>
+            <p className="text-lg text-primary-foreground/80 mb-8 max-w-3xl mx-auto">
+              Desenvolvemos Marketplaces, SaaS e plataformas personalizadas que não apenas 
+              atendem às suas necessidades atuais, mas que estão prontas para o futuro.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a 
+                href={`${whatsappLink}?text=${encodeURIComponent(whatsappMessage)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button size="lg" className="glow-button text-primary-foreground hover:text-primary-foreground">
+                  Iniciar a Transformação Digital
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </a>
             </div>
           </div>
         </div>

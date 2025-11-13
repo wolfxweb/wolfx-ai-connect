@@ -30,11 +30,13 @@ export default function Blog() {
 
   const fetchPosts = async () => {
     try {
-      // Buscar posts publicados sem JOIN primeiro
+      // Buscar posts publicados com data de publicação menor ou igual à data atual
+      const now = new Date().toISOString()
       const { data: postsData, error: postsError } = await supabase
         .from('blog_posts')
         .select('*')
         .eq('status', 'published')
+        .lte('published_at', now)
         .order('published_at', { ascending: false })
 
       if (postsError) throw postsError

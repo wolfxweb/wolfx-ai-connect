@@ -385,7 +385,9 @@ export default function BlogManagement() {
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4" />
                         <span>
-                          {new Date(post.created_at).toLocaleDateString('pt-BR')}
+                          {post.published_at 
+                            ? new Date(post.published_at).toLocaleDateString('pt-BR')
+                            : new Date(post.created_at).toLocaleDateString('pt-BR')}
                         </span>
                       </div>
                     </TableCell>

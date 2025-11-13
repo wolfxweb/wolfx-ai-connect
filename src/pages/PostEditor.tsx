@@ -294,16 +294,19 @@ export default function PostEditor() {
       let scheduledAt = null
       
       if (formData.status === 'published') {
-        // Se o post já estava publicado, manter a data original
-        // Se é a primeira publicação, usar data atual
-        publishedAt = formData.published_at || new Date().toISOString()
+        // Usar a data informada pelo usuário ou data atual como fallback
+        if (formData.published_at) {
+          publishedAt = new Date(formData.published_at).toISOString()
+        } else {
+          publishedAt = new Date().toISOString()
+        }
       } else if (formData.status === 'scheduled' && formData.scheduled_at) {
         scheduledAt = formData.scheduled_at
       }
       
       if (isEditing) {
         // Atualizar post existente
-        const updateData = {
+        const updateData: any = {
           title: formData.title,
           slug,
           content: formData.content,
@@ -316,9 +319,26 @@ export default function PostEditor() {
           seo_description: formData.seo_description,
           seo_keywords: keywordsArray,
           meta_robots: formData.meta_robots,
-          scheduled_at: scheduledAt,
-          updated_at: new Date().toISOString(),
-          ...(publishedAt && { published_at: publishedAt })
+          updated_at: new Date().toISOString()
+        }
+        
+        // Sempre incluir published_at se foi definido no formulário, independente do status
+        // Isso permite alterar a data mesmo que o post esteja como rascunho
+        if (formData.published_at && formData.published_at.trim() !== '') {
+          // Se o usuário definiu uma data, sempre usar essa data (importante: sempre incluir no update)
+          updateData.published_at = new Date(formData.published_at).toISOString()
+        } else if (formData.status === 'published') {
+          // Se status é published mas não tem data definida, usar data atual
+          updateData.published_at = new Date().toISOString()
+        }
+        // Se não é published e não tem data definida, não incluir published_at no update
+        // Isso mantém o valor existente no banco de dados (não altera)
+        
+        // Incluir scheduled_at apenas se status for scheduled
+        if (formData.status === 'scheduled' && formData.scheduled_at) {
+          updateData.scheduled_at = scheduledAt
+        } else {
+          updateData.scheduled_at = null
         }
         
         const { error } = await supabase
@@ -573,9 +593,37 @@ export default function PostEditor() {
                     />
                   </div>
                   
+                  {/* Campo de Data de Publicação - sempre visível quando editando ou quando status é published */}
+                  {(isEditing || formData.status === 'published' || formData.published_at) && (
+                    <div className="space-y-2">
+                      <Label htmlFor="published_at">
+                        Data de Publicação
+                        {formData.status === 'published' && (
+                          <span className="text-xs text-muted-foreground ml-2">(obrigatório para posts publicados)</span>
+                        )}
+                      </Label>
+                      <Input
+                        id="published_at"
+                        type="datetime-local"
+                        value={formData.published_at ? new Date(formData.published_at).toISOString().slice(0, 16) : ''}
+                        onChange={(e) => {
+                          const dateValue = e.target.value ? new Date(e.target.value).toISOString() : '';
+                          setFormData({ ...formData, published_at: dateValue });
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {formData.status === 'published' 
+                          ? 'A data de publicação deve ser menor ou igual à data atual para o post aparecer na lista pública. Você pode alterar esta data para controlar quando o post aparece na lista pública.'
+                          : isEditing 
+                            ? 'Esta data será usada quando o post for publicado. Você pode alterar a data de publicação mesmo que o post esteja como rascunho.'
+                            : 'Esta data será usada quando o post for publicado. Deixe vazio para usar a data atual na publicação.'}
+                      </p>
+                    </div>
+                  )}
+                  
                   {formData.status === 'scheduled' && (
                     <div className="space-y-2">
-                      <Label htmlFor="scheduled_at">Data e Hora de Publicação</Label>
+                      <Label htmlFor="scheduled_at">Data e Hora de Publicação Agendada</Label>
                       <Input
                         id="scheduled_at"
                         type="datetime-local"

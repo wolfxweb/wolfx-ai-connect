@@ -27,12 +27,14 @@ export default function BlogPost() {
 
   const fetchPost = async (postSlug: string) => {
     try {
-      // Buscar post primeiro
+      // Buscar post publicado com data de publicação menor ou igual à data atual
+      const now = new Date().toISOString()
       const { data: postData, error: postError } = await supabase
         .from('blog_posts')
         .select('*')
         .eq('slug', postSlug)
         .eq('status', 'published')
+        .lte('published_at', now)
         .single()
 
       if (postError) throw postError
@@ -83,12 +85,14 @@ export default function BlogPost() {
 
   const fetchRelatedPosts = async (categoryId: string, currentPostId: string) => {
     try {
-      // Buscar posts relacionados primeiro
+      // Buscar posts relacionados publicados com data de publicação menor ou igual à data atual
+      const now = new Date().toISOString()
       const { data: relatedPostsData, error: postsError } = await supabase
         .from('blog_posts')
         .select('*')
         .eq('category_id', categoryId)
         .eq('status', 'published')
+        .lte('published_at', now)
         .neq('id', currentPostId)
         .order('published_at', { ascending: false })
         .limit(3)

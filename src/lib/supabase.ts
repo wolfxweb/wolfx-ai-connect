@@ -157,6 +157,11 @@ class SupabaseLikeQuery {
     return this
   }
 
+  lte(field: string, value: any) {
+    this.filters.push({ type: 'lte', field, value })
+    return this
+  }
+
   ilike(field: string, pattern: string) {
     this.filters.push({ type: 'ilike', field, pattern })
     return this
@@ -264,6 +269,20 @@ class SupabaseLikeQuery {
             break
           case 'in':
             data = data.filter((item: any) => filter.values.includes(item[filter.field]))
+            break
+          case 'lte':
+            // Filtro para valores menores ou iguais (útil para datas)
+            const filterValue = filter.value
+            data = data.filter((item: any) => {
+              const itemValue = item[filter.field]
+              if (itemValue == null) return false
+              // Se ambos são strings (datas ISO), comparar como strings
+              if (typeof itemValue === 'string' && typeof filterValue === 'string') {
+                return itemValue <= filterValue
+              }
+              // Caso contrário, converter para números ou datas
+              return new Date(itemValue) <= new Date(filterValue)
+            })
             break
           case 'ilike':
             const pattern = filter.pattern.replace(/%/g, '.*')
@@ -689,10 +708,16 @@ class SupabaseLikeQuery {
 
         // Campos específicos por tabela
         if (this.tableName === 'blog_posts') {
-          // Se mudou para published e não tinha published_at, definir agora
-          if (values.status === 'published' && !item.published_at) {
+          // Se published_at foi explicitamente definido nos values, usar esse valor
+          // Caso contrário, se mudou para published e não tinha published_at, definir agora
+          if (values.published_at !== undefined) {
+            // published_at foi explicitamente definido, usar esse valor
+            updateData.published_at = values.published_at
+          } else if (values.status === 'published' && !item.published_at) {
+            // Se mudou para published e não tinha published_at, definir agora
             updateData.published_at = new Date().toISOString()
           }
+          // Se não é published e published_at não foi definido, manter o valor existente (não alterar)
         }
 
         await table.update(item.id, updateData)

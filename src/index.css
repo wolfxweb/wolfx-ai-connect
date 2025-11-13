@@ -123,23 +123,29 @@
     background: linear-gradient(
       135deg,
       hsl(var(--primary)) 0%,
-      hsl(var(--primary-glow)) 25%,
-      hsl(var(--accent)) 50%,
-      hsl(var(--primary-glow)) 75%,
+      hsl(var(--primary-glow)) 30%,
+      hsl(var(--accent)) 60%,
+      hsl(var(--primary-glow)) 85%,
       hsl(var(--primary)) 100%
     );
-    background-size: 200% 200%;
+    background-size: 300% 300%;
     position: relative;
     overflow: hidden;
-    animation: gradient-flow 20s ease infinite;
+    animation: gradient-move 25s ease infinite;
   }
   
-  @keyframes gradient-flow {
+  @keyframes gradient-move {
     0% {
       background-position: 0% 50%;
     }
-    50% {
+    25% {
       background-position: 100% 50%;
+    }
+    50% {
+      background-position: 100% 100%;
+    }
+    75% {
+      background-position: 0% 100%;
     }
     100% {
       background-position: 0% 50%;
@@ -149,30 +155,38 @@
   .hero-section::before {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
+    top: -100%;
+    left: -100%;
+    width: 300%;
+    height: 300%;
     background: radial-gradient(
-      circle at 30% 40%,
-      hsl(var(--accent) / 0.2) 0%,
-      transparent 40%
+      circle,
+      hsl(var(--accent) / 0.3) 0%,
+      transparent 50%
     );
     z-index: 1;
-    animation: orb-float-1 15s ease-in-out infinite;
+    animation: orb-move-1 20s ease-in-out infinite;
   }
   
-  @keyframes orb-float-1 {
-    0%, 100% {
+  @keyframes orb-move-1 {
+    0% {
       transform: translate(0%, 0%) scale(1);
-      opacity: 0.6;
+      opacity: 0.7;
     }
-    33% {
-      transform: translate(20%, 15%) scale(1.2);
+    25% {
+      transform: translate(15%, 20%) scale(1.3);
+      opacity: 0.9;
+    }
+    50% {
+      transform: translate(30%, 10%) scale(0.9);
       opacity: 0.8;
     }
-    66% {
-      transform: translate(-10%, 25%) scale(0.9);
+    75% {
+      transform: translate(15%, -10%) scale(1.1);
+      opacity: 0.85;
+    }
+    100% {
+      transform: translate(0%, 0%) scale(1);
       opacity: 0.7;
     }
   }
@@ -180,30 +194,38 @@
   .hero-section::after {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
+    bottom: -100%;
+    right: -100%;
+    width: 300%;
+    height: 300%;
     background: radial-gradient(
-      circle at 70% 60%,
-      hsl(var(--primary-glow) / 0.25) 0%,
-      transparent 45%
+      circle,
+      hsl(var(--primary-glow) / 0.35) 0%,
+      transparent 55%
     );
     z-index: 1;
-    animation: orb-float-2 18s ease-in-out infinite;
+    animation: orb-move-2 22s ease-in-out infinite;
   }
   
-  @keyframes orb-float-2 {
-    0%, 100% {
+  @keyframes orb-move-2 {
+    0% {
       transform: translate(0%, 0%) scale(1);
-      opacity: 0.5;
+      opacity: 0.6;
     }
-    33% {
-      transform: translate(-15%, -20%) scale(1.1);
-      opacity: 0.7;
+    25% {
+      transform: translate(-20%, -25%) scale(1.2);
+      opacity: 0.8;
     }
-    66% {
-      transform: translate(25%, -10%) scale(0.95);
+    50% {
+      transform: translate(-35%, -15%) scale(0.95);
+      opacity: 0.75;
+    }
+    75% {
+      transform: translate(-20%, 10%) scale(1.15);
+      opacity: 0.85;
+    }
+    100% {
+      transform: translate(0%, 0%) scale(1);
       opacity: 0.6;
     }
   }

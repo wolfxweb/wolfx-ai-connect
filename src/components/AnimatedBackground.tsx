@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { Bot } from 'lucide-react'
 
 interface Particle {
   x: number
@@ -7,20 +8,22 @@ interface Particle {
   speedX: number
   speedY: number
   opacity: number
+  rotation: number
+  rotationSpeed: number
+  id: number
 }
 
 const AnimatedBackground = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const particlesRef = useRef<Particle[]>([])
   const animationFrameRef = useRef<number>()
   const isDarkRef = useRef<boolean>(false)
+  const lastUpdateTimeRef = useRef<number>(0)
+  const [particles, setParticles] = useState<Particle[]>([])
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const container = containerRef.current
+    if (!container) return
 
     // Verificar tema inicial
     const checkDarkMode = () => {
@@ -37,139 +40,117 @@ const AnimatedBackground = () => {
 
     // Função para criar partículas
     const createParticles = () => {
-      // Verificar se o canvas tem dimensões válidas
-      if (canvas.width === 0 || canvas.height === 0) {
-        console.warn('⚠️ Canvas sem dimensões válidas, aguardando...', canvas.width, 'x', canvas.height)
-        return
-      }
-      
-      // Garantir pelo menos 30 partículas, máximo 80
-      const area = canvas.width * canvas.height
-      const particleCount = Math.max(30, Math.min(80, Math.floor(area / 12000)))
-      console.log('🎨 Criando partículas:', {
-        count: particleCount,
-        canvas: `${canvas.width}x${canvas.height}`,
-        area: area
-      })
-      
-      particlesRef.current = Array.from({ length: particleCount }, () => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 3 + 2, // Partículas maiores: 2-5px
-        speedX: (Math.random() - 0.5) * 0.8,
-        speedY: (Math.random() - 0.5) * 0.8,
-        opacity: Math.random() * 0.4 + 0.4 // Opacidade maior: 0.4-0.8
-      }))
-      console.log('✅ Partículas criadas:', particlesRef.current.length)
-    }
-
-    // Configurar tamanho do canvas
-    const resizeCanvas = () => {
       const width = window.innerWidth
       const height = window.innerHeight
       
-      // Verificar se o canvas tem dimensões válidas
-      if (width > 0 && height > 0) {
-        canvas.width = width
-        canvas.height = height
-        // Recriar partículas após redimensionar
-        createParticles()
-      } else {
-        console.warn('⚠️ Canvas sem dimensões válidas:', width, 'x', height)
+      if (width === 0 || height === 0) {
+        console.warn('⚠️ Container sem dimensões válidas, aguardando...', width, 'x', height)
+        return
       }
-    }
-    
-    // Aguardar um frame para garantir que o DOM está pronto
-    requestAnimationFrame(() => {
-      resizeCanvas()
       
-      // Aguardar mais um frame para garantir que as partículas foram criadas
-      requestAnimationFrame(() => {
-        animate()
+      // Garantir pelo menos 20 partículas, máximo 50 (menos que canvas para performance)
+      const area = width * height
+      const particleCount = Math.max(20, Math.min(50, Math.floor(area / 15000)))
+      
+      console.log('🎨 Criando partículas com ícones de robô:', {
+        count: particleCount,
+        container: `${width}x${height}`,
+        area: area
       })
-    })
-    
-    window.addEventListener('resize', resizeCanvas)
+      
+      const newParticles: Particle[] = Array.from({ length: particleCount }, (_, index) => ({
+        id: index,
+        x: Math.random() * width,
+        y: Math.random() * height,
+        size: Math.random() * 8 + 12, // Tamanhos maiores: 12-20px
+        speedX: (Math.random() - 0.5) * 0.5,
+        speedY: (Math.random() - 0.5) * 0.5,
+        opacity: Math.random() * 0.3 + 0.2, // Opacidade: 0.2-0.5
+        rotation: Math.random() * 360,
+        rotationSpeed: (Math.random() - 0.5) * 2 // Rotação lenta: -1 a 1 grau por frame
+      }))
+      
+      particlesRef.current = newParticles
+      setParticles(newParticles)
+      console.log('✅ Partículas criadas:', newParticles.length)
+    }
 
     // Função de animação
-    const animate = () => {
-      // Verificar se o canvas tem dimensões válidas
-      if (canvas.width === 0 || canvas.height === 0) {
+    const updateInterval = 1000 / 30 // 30 FPS para melhor performance
+
+    const animate = (currentTime: number) => {
+      const width = window.innerWidth
+      const height = window.innerHeight
+
+      if (width === 0 || height === 0 || particlesRef.current.length === 0) {
         animationFrameRef.current = requestAnimationFrame(animate)
         return
       }
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-      // Usar referência do tema (mais eficiente)
-      // Cores mais vibrantes e visíveis
-      const primaryColor = isDarkRef.current ? '147, 197, 253' : '37, 99, 235' // blue-600 mais visível
-      const accentColor = isDarkRef.current ? '59, 130, 246' : '59, 130, 246' // blue-500
-
-      // Verificar se há partículas e se o canvas tem dimensões válidas
-      if (particlesRef.current.length === 0 && canvas.width > 0 && canvas.height > 0) {
-        console.warn('⚠️ Nenhuma partícula encontrada, recriando...')
-        createParticles()
-      }
-      
-      // Se ainda não há partículas, pular este frame
-      if (particlesRef.current.length === 0) {
+      // Limitar atualizações a 30 FPS
+      if (currentTime - lastUpdateTimeRef.current < updateInterval) {
         animationFrameRef.current = requestAnimationFrame(animate)
         return
       }
+      lastUpdateTimeRef.current = currentTime
 
-      particlesRef.current.forEach((particle, index) => {
-        // Atualizar posição
-        particle.x += particle.speedX
-        particle.y += particle.speedY
+      // Atualizar posições e rotações
+      particlesRef.current = particlesRef.current.map(particle => {
+        let newX = particle.x + particle.speedX
+        let newY = particle.y + particle.speedY
+        let newSpeedX = particle.speedX
+        let newSpeedY = particle.speedY
 
         // Rebater nas bordas
-        if (particle.x < 0 || particle.x > canvas.width) particle.speedX *= -1
-        if (particle.y < 0 || particle.y > canvas.height) particle.speedY *= -1
+        if (newX < 0 || newX > width) {
+          newSpeedX *= -1
+          newX = Math.max(0, Math.min(width, newX))
+        }
+        if (newY < 0 || newY > height) {
+          newSpeedY *= -1
+          newY = Math.max(0, Math.min(height, newY))
+        }
 
-        // Manter partículas dentro do canvas
-        particle.x = Math.max(0, Math.min(canvas.width, particle.x))
-        particle.y = Math.max(0, Math.min(canvas.height, particle.y))
+        // Manter partículas dentro do container
+        newX = Math.max(0, Math.min(width, newX))
+        newY = Math.max(0, Math.min(height, newY))
 
-        // Desenhar partícula com gradiente para mais visibilidade
-        const gradient = ctx.createRadialGradient(
-          particle.x, particle.y, 0,
-          particle.x, particle.y, particle.size
-        )
-        gradient.addColorStop(0, `rgba(${primaryColor}, ${particle.opacity})`)
-        gradient.addColorStop(1, `rgba(${primaryColor}, ${particle.opacity * 0.3})`)
-        
-        ctx.beginPath()
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
-        ctx.fillStyle = gradient
-        ctx.fill()
-
-        // Desenhar linhas entre partículas próximas (mais visíveis)
-        particlesRef.current.slice(index + 1).forEach(otherParticle => {
-          const dx = particle.x - otherParticle.x
-          const dy = particle.y - otherParticle.y
-          const distance = Math.sqrt(dx * dx + dy * dy)
-
-          if (distance < 150) {
-            ctx.beginPath()
-            ctx.moveTo(particle.x, particle.y)
-            ctx.lineTo(otherParticle.x, otherParticle.y)
-            // Linhas mais visíveis
-            ctx.strokeStyle = `rgba(${accentColor}, ${0.15 * (1 - distance / 150)})`
-            ctx.lineWidth = 1
-            ctx.stroke()
-          }
-        })
+        return {
+          ...particle,
+          x: newX,
+          y: newY,
+          speedX: newSpeedX,
+          speedY: newSpeedY,
+          rotation: particle.rotation + particle.rotationSpeed
+        }
       })
+
+      // Atualizar estado para re-renderizar (limitado a 30 FPS)
+      setParticles([...particlesRef.current])
 
       animationFrameRef.current = requestAnimationFrame(animate)
     }
 
-    // Não iniciar animação aqui - será iniciada após resizeCanvas
-    // animate() será chamado dentro do requestAnimationFrame após resizeCanvas
+    // Inicializar partículas
+    const init = () => {
+      createParticles()
+      // Aguardar um frame antes de iniciar animação
+      requestAnimationFrame((time) => {
+        animate(time)
+      })
+    }
+
+    // Inicializar quando o componente monta
+    init()
+
+    // Recriar partículas quando a janela redimensiona
+    const handleResize = () => {
+      createParticles()
+    }
+    window.addEventListener('resize', handleResize)
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas)
+      window.removeEventListener('resize', handleResize)
       darkModeQuery.removeEventListener('change', handleDarkModeChange)
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
@@ -180,7 +161,7 @@ const AnimatedBackground = () => {
   return (
     <>
       {/* Gradiente animado de fundo */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
+      <div ref={containerRef} className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-white to-cyan-50/50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900" />
         
         {/* Gradientes animados */}
@@ -193,20 +174,31 @@ const AnimatedBackground = () => {
                style={{ animationDuration: '10s', animationDelay: '4s' }} />
         </div>
 
-        {/* Canvas com partículas */}
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 opacity-60 dark:opacity-40"
-          style={{ 
-            width: '100%', 
-            height: '100%',
-            pointerEvents: 'none' // Não interferir com cliques
-          }}
-        />
+        {/* Partículas com ícones de robô */}
+        {particles.map(particle => (
+          <div
+            key={particle.id}
+            className="absolute transition-none pointer-events-none"
+            style={{
+              left: `${particle.x}px`,
+              top: `${particle.y}px`,
+              transform: `translate(-50%, -50%) rotate(${particle.rotation}deg)`,
+              opacity: particle.opacity,
+              width: `${particle.size}px`,
+              height: `${particle.size}px`,
+            }}
+          >
+            <Bot 
+              className="w-full h-full text-blue-600/30 dark:text-blue-300/40" 
+              style={{ 
+                filter: 'drop-shadow(0 0 1px rgba(37, 99, 235, 0.2))',
+              }}
+            />
+          </div>
+        ))}
       </div>
     </>
   )
 }
 
 export default AnimatedBackground
-
